@@ -1,5 +1,5 @@
 ```mermaid
-usecaseDiagram
+flowchart LR
     actor Owner
     actor Manager
     actor Employee
