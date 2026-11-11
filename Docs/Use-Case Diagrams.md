@@ -1,28 +1,27 @@
+```mermaid
+flowchart LR
+    Owner([Owner])
+    Manager([Manager])
+    Employee([Employee])
+    Customer([Customer])
 
-usecaseDiagram
-    actor Owner
-    actor Manager
-    actor Employee
-    actor Customer
-
-    rectangle "ChickenHub System" {
-        (Log in) as UC1
-        (Manage user accounts) as UC2
-        (Record chicken purchases) as UC3
-        (Record ingredient purchases) as UC4
-        (Manage inventory) as UC5
-        (Manage products and prices) as UC6
-        (Record walk-in sales) as UC7
-        (Manage expenses) as UC8
-        (View business reports) as UC9
-        (Search historical records) as UC10
-        (Manage customer orders) as UC11
-
-        (Browse menu) as UC12
-        (Select meals) as UC13
-        (Place online order) as UC14
-        (View order status) as UC15
-    }
+    subgraph System["ChickenHub System"]
+        UC1([Log in])
+        UC2([Manage user accounts])
+        UC3([Record chicken purchases])
+        UC4([Record ingredient purchases])
+        UC5([Manage inventory])
+        UC6([Manage products and prices])
+        UC7([Record walk-in sales])
+        UC8([Manage expenses])
+        UC9([View business reports])
+        UC10([Search historical records])
+        UC11([Manage customer orders])
+        UC12([Browse menu])
+        UC13([Select meals])
+        UC14([Place online order])
+        UC15([View order status])
+    end
 
     Owner --> UC1
     Owner --> UC2
@@ -57,5 +56,6 @@ usecaseDiagram
     Customer --> UC14
     Customer --> UC15
 
-    UC14 ..> UC12 : <<include>>
-    UC14 ..> UC13 : <<include>>
+    UC14 -.->|Include| UC12
+    UC14 -.->|Include| UC13
+```
