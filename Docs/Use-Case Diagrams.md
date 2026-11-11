@@ -1,29 +1,43 @@
 ```mermaid
+
 flowchart LR
-    actor Owner
-    actor Manager
-    actor Employee
-    actor Customer
+    %% Actors
+    Owner([Owner])
+    Manager([Manager])
+    Employee([Employee])
+    Customer([Customer])
 
-    rectangle "ChickenHub System" {
-        (Log in) as UC1
-        (Manage user accounts) as UC2
-        (Record chicken purchases) as UC3
-        (Record ingredient purchases) as UC4
-        (Manage inventory) as UC5
-        (Manage products and prices) as UC6
-        (Record walk-in sales) as UC7
-        (Manage expenses) as UC8
-        (View business reports) as UC9
-        (Search historical records) as UC10
-        (Manage customer orders) as UC11
+    %% System boundary
+    subgraph ChickenHub["ChickenHub Business Management System"]
 
-        (Browse menu) as UC12
-        (Select meals) as UC13
-        (Place online order) as UC14
-        (View order status) as UC15
-    }
+        %% User management
+        UC1([Manage User Accounts])
 
+        %% Purchasing
+        UC2([Record Chicken Purchases])
+        UC3([Record Ingredient Purchases])
+
+        %% Business management
+        UC4([Manage Inventory])
+        UC5([Manage Products and Prices])
+        UC6([Record Walk-in Sales])
+        UC7([Manage Expenses])
+        UC8([View Business Reports])
+        UC9([Search Historical Records])
+
+        %% Order management
+        UC10([Manage Customer Orders])
+        UC11([Process Orders])
+        UC12([Update Order Status])
+
+        %% Customer functionality
+        UC13([Browse Menu])
+        UC14([Select Meals])
+        UC15([Place Online Order])
+        UC16([View Order Status])
+    end
+
+    %% Owner interactions
     Owner --> UC1
     Owner --> UC2
     Owner --> UC3
@@ -34,9 +48,9 @@ flowchart LR
     Owner --> UC8
     Owner --> UC9
     Owner --> UC10
-    Owner --> UC11
 
-    Manager --> UC1
+    %% Manager interactions
+    Manager --> UC2
     Manager --> UC3
     Manager --> UC4
     Manager --> UC5
@@ -45,18 +59,22 @@ flowchart LR
     Manager --> UC8
     Manager --> UC9
     Manager --> UC10
-    Manager --> UC11
 
-    Employee --> UC1
-    Employee --> UC5
-    Employee --> UC7
+    %% Employee interactions
+    Employee --> UC4
+    Employee --> UC6
     Employee --> UC11
+    Employee --> UC12
 
-    Customer --> UC12
+    %% Customer interactions
     Customer --> UC13
     Customer --> UC14
     Customer --> UC15
+    Customer --> UC16
 
-    UC14 ..> UC12 : <<include>>
-    UC14 ..> UC13 : <<include>>
+    %% Include relationships
+    UC15 -.->|include| UC13
+    UC15 -.->|include| UC14
+    UC11 -.->|include| UC12
+
 ```
