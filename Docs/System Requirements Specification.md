@@ -98,3 +98,8 @@ These are rules that the application must follow:
 
 # 2.5 Assumptions and outstanding decisions
 The following details still need confirmation from the business:
+
+- Whether customers can customise meal accompaniments.
+- Preferred payment methods.
+- Whether online orders require payment before collection.
+- Whether employees can record expenses or only the owner and manager.
