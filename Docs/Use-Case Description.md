@@ -1,14 +1,14 @@
 # 3.2 Use-Case Description: Record Chicken Purchase
 ## 3.2.1 Use-case information
-|**Item**	      |      **Description** |
+| **Item**	      |      **Description** |
 
-|Use-case ID	    |    UC-01 |
-|Use-case name	|    Record Chicken Purchase |
-|Primary actor	|    Owner |
-|Supporting actors |	Manager, authorised Employee |
-|Category	  |      Inventory and Purchasing |
-|Priority	  |      High |
-|Trigger	      |      A new chicken purchase is received by the business. |
+| Use-case ID	    |    UC-01 |
+| Use-case name	|    Record Chicken Purchase |
+| Primary actor	|    Owner |
+| Supporting actors |	Manager, authorised Employee |
+| Category	  |      Inventory and Purchasing |
+| Priority	  |      High |
+| Trigger	      |      A new chicken purchase is received by the business. |
 
 ## 3.2.2 Preconditions
 Before this use case can begin:
