@@ -1,7 +1,7 @@
 # 3.2 Use-Case Description: Record Chicken Purchase
 ## 3.2.1 Use-case information
 | **Item**	      |      **Description** |
-
+| --- | --- |
 | Use-case ID	    |    UC-01 |
 | Use-case name	|    Record Chicken Purchase |
 | Primary actor	|    Owner |
