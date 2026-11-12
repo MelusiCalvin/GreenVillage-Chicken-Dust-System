@@ -123,11 +123,11 @@ This use case covers what happens to stock after it has been purchased.
 For ChickenHub, inventory management is particularly important because whole chickens are used to prepare full, half and quarter chicken meals. Ingredients are also consumed during meal preparation.
 
 ## 3.4.1 Use-case information
-**Item	            Description**
-Use-case ID	        UC-03
-Use-case name	    Manage Inventory
-Primary actor	    Owner
-Supporting actors	Manager, authorised Employee
-Category	        Inventory Management
-Priority	        High
-Trigger	            A user needs to view, update or adjust stock information.
+|**Item	      |      Description**|
+|Use-case ID	    |    UC-03|
+|Use-case name	|    Manage Inventory|
+|Primary actor	|    Owner|
+|Supporting actors	Manager, authorised Employee|
+|Category	   |     Inventory Management|
+|Priority	   |     High
+|Trigger	       |     A user needs to view, update or adjust stock information.|
