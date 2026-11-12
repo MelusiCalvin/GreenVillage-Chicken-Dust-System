@@ -140,6 +140,7 @@ For ChickenHub, inventory management is particularly important because whole chi
 
 ## 3.4.3 Main success scenario
 | **Step** | **Actor / System** | **Action** |
+| --- | --- | --- |
 | 1	| User |	Opens the inventory dashboard. |
 | 2	| System |	Displays available stock items and quantities. |
 | 3	| User |	Selects a stock item. |
@@ -154,6 +155,7 @@ For ChickenHub, inventory management is particularly important because whole chi
 
 ## 3.4.4 Inventory actions
 | **Action** |	**Description** |
+| --- | --- |
 | Stock received |	Adds newly purchased items to inventory. |
 | Stock used |	Records ingredients used during meal preparation. |
 | Stock sold |	Records stock consumed through sales. |
