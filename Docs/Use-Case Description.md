@@ -132,3 +132,30 @@ For ChickenHub, inventory management is particularly important because whole chi
 | Category	   |     Inventory Management|
 | Priority	   |     High
 | Trigger	       |     A user needs to view, update or adjust stock information.|
+
+## 3.4.2 Preconditions
+1. The user must be authenticated.
+2. The user must have inventory permissions.
+3. The relevant stock item must exist in the system.
+
+## 3.4.3 Main success scenario
+| **Step** | **Actor / System** | **Action** |
+| 1	| User |	Opens the inventory dashboard. |
+| 2	| System |	Displays available stock items and quantities. |
+| 3	| User |	Selects a stock item. |
+| 4	| System |	Displays the item's stock information and movement history. |
+| 5	| User |	Selects an inventory action. |
+| 6	| User |	Records stock received, used, wasted or adjusted. |
+| 7	| User |	Provides the quantity and reason where applicable. |
+| 8	| System |	Validates the information. |
+| 9	| System |	Updates the stock balance. |
+| 10| System |	Records the stock movement in the history. |
+| 11| System |	Displays confirmation. |
+
+## 3.4.4 Inventory actions
+| **Action** |	**Description** |
+| Stock received |	Adds newly purchased items to inventory. |
+| Stock used |	Records ingredients used during meal preparation. |
+| Stock sold |	Records stock consumed through sales. |
+| Stock wasted |	Records spoiled or unusable stock. |
+| Stock adjustment |	Corrects stock quantities with a recorded reason. |
