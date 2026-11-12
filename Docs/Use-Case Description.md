@@ -69,7 +69,7 @@ The business can record chicken purchases digitally, maintain accurate stock qua
 
 # 3.3 Use-Case Description: Record Ingredient Purchase
 ## 3.3.1 Use-case information
-| **Item	            |    Description** |
+| **Item**        |   **Description** |
 | --- | --- |
 | Use-case ID	        |    UC-02 |
 | Use-case name	    |    Record Ingredient Purchase |
