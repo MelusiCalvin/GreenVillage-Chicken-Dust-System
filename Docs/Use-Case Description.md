@@ -38,6 +38,7 @@ The following describes the normal process:
 
 ## 3.2.4 Alternative and exception flows
 | **Scenario**                  |      **System response**|
+| --- | --- |
 | Required information is missing	   |     Displays validation messages.|
 | Quantity is zero or negative	   |     Rejects the purchase entry.|
 | Purchase price is invalid	     |       Requests a valid amount.|
@@ -357,6 +358,7 @@ The business can maintain its product catalogue, update meal prices and control 
 
 ## 3.8.3 Main success scenario
 | **Step**	| **Actor / System**	| **Action** |
+| --- | --- | --- |
 | 1	| Customer	| Opens the ChickenHub ordering page. |
 | 2	| System	| Retrieves available products. |
 | 3	| System	| Displays the menu. |
@@ -506,6 +508,7 @@ The business can receive, process and monitor online orders from submission unti
 
 ## 3.11.3 Main success scenario
 | Step	| Actor / System	| Action |
+| --- | --- | --- |
 | 1	| User	| Opens the historical records section. |
 | 2	| System	| Displays available record categories. |
 | 3	| User	| Selects a category. |
@@ -584,9 +587,9 @@ The owner and authorised employees can retrieve historical business information 
 The business owner can monitor revenue, expenses, purchasing activities, inventory and estimated profit over different periods.
 
 # 3.13 Use-Case: Manage User Accounts
-3.13.1 Use-case information
-| --- | --- |
+## 3.13.1 Use-case information
 | Item	| Description | 
+| --- | --- |
 | Use-case ID	| UC-12 | 
 | Use-case name	| Manage User Accounts | 
 | Primary actor	| Owner | 
