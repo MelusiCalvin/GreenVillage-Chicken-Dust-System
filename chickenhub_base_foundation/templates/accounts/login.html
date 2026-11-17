@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Staff Login | ChickenHub Management Portal{% endblock %}
+
+{% block content %}
+<!-- Top minimal nav for login page -->
+<nav class="navbar navbar-dark navbar-chickenhub py-2">
+    <div class="container">
+        <a class="navbar-brand navbar-brand-chickenhub" href="{% url 'public:home' %}">
+            <i class="bi bi-fire text-orange"></i>
+            <span>Chicken<span class="brand-hub">Hub</span></span>
+        </a>
+        <a href="{% url 'public:home' %}" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-arrow-left me-1"></i> Public Website
+        </a>
+    </div>
+</nav>
+
+<div class="login-page-wrapper">
+    <div class="login-card">
+        <div class="login-card-header">
+            <div class="d-inline-flex p-3 rounded-circle bg-charcoal-surface text-orange fs-3 mb-2">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <h4 class="fw-bold mb-1">Staff Management Portal</h4>
+            <p class="text-white-50 small mb-0">Authorized access for Owner, Manager & Employees</p>
+        </div>
+
+        <div class="login-card-body">
+            {# Form non-field errors #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger d-flex align-items-center mb-3 py-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <div class="small">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'accounts:login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+                {% csrf_token %}
+
+                <!-- Username Field -->
+                <div class="mb-3">
+                    <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold text-secondary small">
+                        <i class="bi bi-person me-1"></i> Username
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.username.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div class="mb-4">
+                    <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold text-secondary small">
+                        <i class="bi bi-key me-1"></i> Password
+                    </label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.password.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-chickenhub btn-lg w-100 py-2 mb-3">
+                    <i class="bi bi-box-arrow-in-right me-2"></i> Log In to Dashboard
+                </button>
+            </form>
+
+            <div class="border-top pt-3 text-center">
+                <div class="small text-muted mb-2">
+                    <i class="bi bi-info-circle me-1"></i> Are you a customer looking to order?
+                </div>
+                <a href="{% url 'public:home' %}" class="btn btn-sm btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-left-circle me-1"></i> Browse ChickenHub Menu
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
