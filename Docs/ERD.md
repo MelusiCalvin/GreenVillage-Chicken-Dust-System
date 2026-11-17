@@ -7,17 +7,18 @@ The database entities represent the main objects and activities that ChickenHub 
 ## A. User and Customer Management
 
 ### 1. UserAccount
-Stores the accounts of people who are authorised to access the business management system.
+Stores the accounts of people who are authorised to access the business management system.  
+
 Proposed attributes:
-user_id (PK)
-first_name
-last_name
-username
-email
-password
-role
-is_active
-date_created
+- user_id (PK)
+- first_name
+- last_name
+- username
+- email
+- password
+- role
+- is_active
+- date_created
 
 The role will identify whether the account belongs to the Owner, Manager or Employee. Django's authentication and permissions system can be used to manage these accounts.
 
