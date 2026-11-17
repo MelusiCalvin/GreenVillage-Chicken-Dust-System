@@ -123,7 +123,8 @@ This entity will provide a history of stock changes.
 
 ### 8. ChickenProcessing
 
-Records the processing of whole chickens into smaller portions.
+Records the processing of whole chickens into smaller portions.  
+
 Proposed attributes:
 processing_id (PK)
 processing_date
@@ -133,7 +134,8 @@ notes
 
 ### 9. ProcessingOutput
 
-Records the portions produced from a chicken-processing activity.
+Records the portions produced from a chicken-processing activity.  
+
 Proposed attributes:
 processing_output_id (PK)
 processing_id (FK)
