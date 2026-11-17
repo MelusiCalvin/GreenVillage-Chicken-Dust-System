@@ -279,5 +279,3 @@ The initial database design contains 17 entities:
 - CustomerOrder
 - OrderItem
 - Expense
-
-These entities will form the foundation of the ChickenHub database design. Their relationships will be represented in the Entity Relationship Diagram in the next section.
