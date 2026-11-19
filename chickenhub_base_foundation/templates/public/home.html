@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}ChickenHub | Authentic Braaied Chicken Dust & Fresh Poultry{% endblock %}
+
+{% block content %}
+<!-- Public Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-chickenhub sticky-top">
+    <div class="container">
+        <a class="navbar-brand navbar-brand-chickenhub" href="{% url 'public:home' %}">
+            <i class="bi bi-fire text-orange"></i>
+            <span>Chicken<span class="brand-hub">Hub</span></span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{% url 'public:home' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#menu">Our Menu</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#about">About Chicken Dust</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#hours">Hours & Location</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                {% if user.is_authenticated %}
+                    <span class="text-white-50 small d-none d-md-inline me-1">
+                        Hi, <strong>{{ user.first_name|default:user.username }}</strong>
+                    </span>
+                    <a href="{% url 'dashboard:index' %}" class="btn btn-sm btn-chickenhub">
+                        <i class="bi bi-speedometer2 me-1"></i> Staff Dashboard
+                    </a>
+                    <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-light" title="Log out">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-person-lock me-1"></i> Staff Portal
+                    </a>
+                    <a href="#menu" class="btn btn-sm btn-chickenhub">
+                        <i class="bi bi-bag-check me-1"></i> Order Online
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center gy-4">
+            <div class="col-lg-7">
+                <span class="badge rounded-pill bg-charcoal text-orange px-3 py-2 mb-3 border border-secondary">
+                    <i class="bi bi-fire me-1"></i> Authentic South African Street Braai
+                </span>
+                <h1 class="hero-title mb-3">
+                    Hot, Smoky & Flavorful <span class="text-orange">Braaied Chicken Dust</span>
+                </h1>
+                <p class="hero-subtitle mb-4">
+                    Flame-grilled to perfection over open coals with our signature spice blend. 
+                    Serving succulent whole chickens, quarter & half portions, and traditional sides like pap and homemade gravy.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="#menu" class="btn btn-chickenhub btn-lg px-4">
+                        <i class="bi bi-menu-button-wide me-2"></i> Browse Menu
+                    </a>
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg px-4">
+                            <i class="bi bi-shield-lock me-2"></i> Staff Login
+                        </a>
+                    {% else %}
+                        <a href="{% url 'dashboard:index' %}" class="btn btn-outline-light btn-lg px-4">
+                            <i class="bi bi-grid-1x2 me-2"></i> Management Dashboard
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card bg-charcoal border-secondary text-white shadow-lg p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom border-secondary">
+                        <div class="p-3 bg-charcoal-surface rounded-3 text-orange fs-2">
+                            <i class="bi bi-basket3"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Online Customer Ordering</h5>
+                            <small class="text-white-50">Fast pickup & zero waiting in queues</small>
+                        </div>
+                    </div>
+                    <ul class="list-unstyled mb-4 small text-secondary">
+                        <li class="d-flex align-items-center mb-2">
+                            <i class="bi bi-check-circle-fill text-orange me-2"></i> Browse hot braai meals & raw poultry
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                            <i class="bi bi-check-circle-fill text-orange me-2"></i> Select your preferred portions & traditional sides
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                            <i class="bi bi-check-circle-fill text-orange me-2"></i> Place collection order without requiring an account
+                        </li>
+                        <li class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-orange me-2"></i> Track order status with your reference code
+                        </li>
+                    </ul>
+                    <div class="alert alert-dark bg-charcoal-surface border-secondary py-2 px-3 mb-0 small text-white-50">
+                        <i class="bi bi-info-circle text-orange me-1"></i>
+                        Foundation Phase: Customer shopping cart & checkout will activate in the upcoming Orders module.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Menu Showcase Section -->
+<section id="menu" class="py-5">
+    <div class="container py-4">
+        <div class="text-center max-w-700 mx-auto mb-5">
+            <span class="hero-tagline">Freshly Prepared Daily</span>
+            <h2 class="fw-bold mt-1 mb-3">Our Signature Meals & Offerings</h2>
+            <p class="text-muted">
+                From hot braai off the coals to fresh raw chicken cuts for home cooking, ChickenHub provides the best quality poultry in the community.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            {% for meal in featured_meals %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="meal-card p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="meal-card-icon">
+                                <i class="bi {{ meal.icon }}"></i>
+                            </div>
+                            <span class="badge badge-chickenhub rounded-pill px-3 py-1">
+                                {{ meal.tag }}
+                            </span>
+                        </div>
+                        <span class="text-uppercase text-muted small fw-bold mb-1">{{ meal.category }}</span>
+                        <h4 class="fw-bold mb-2">{{ meal.name }}</h4>
+                        <p class="text-muted small flex-grow-1">{{ meal.description }}</p>
+                        <div class="pt-3 border-top mt-auto d-flex justify-content-between align-items-center">
+                            <span class="badge bg-light text-dark border">Collection Ready</span>
+                            <span class="text-orange fw-bold small">Available at Store</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- About & Value Proposition Section -->
+<section id="about" class="py-5 bg-white border-top border-bottom">
+    <div class="container py-4">
+        <div class="row align-items-center gy-4">
+            <div class="col-lg-6">
+                <span class="hero-tagline">Why ChickenHub</span>
+                <h2 class="fw-bold mt-1 mb-3">From Physical Books to Modern Digital Service</h2>
+                <p class="text-muted">
+                    ChickenHub began as a beloved local chicken dust braai stall. To give our customers faster service and ensure top product consistency, we have transitioned our business operations into an integrated digital management system.
+                </p>
+                <div class="row g-3 mt-2">
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded-3 h-100">
+                            <i class="bi bi-fire fs-3 text-orange mb-2 d-block"></i>
+                            <h6 class="fw-bold mb-1">Authentic Braai Dust</h6>
+                            <small class="text-muted">Signature open-coal grilled flavor seasoned to perfection.</small>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded-3 h-100">
+                            <i class="bi bi-clock-history fs-3 text-orange mb-2 d-block"></i>
+                            <h6 class="fw-bold mb-1">Pre-Order & Pickup</h6>
+                            <small class="text-muted">Skip the queues by submitting your collection orders online.</small>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded-3 h-100">
+                            <i class="bi bi-shield-check fs-3 text-orange mb-2 d-block"></i>
+                            <h6 class="fw-bold mb-1">Digital Accuracy</h6>
+                            <small class="text-muted">Real-time inventory and sales tracking eliminate paper loss.</small>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded-3 h-100">
+                            <i class="bi bi-heart fs-3 text-orange mb-2 d-block"></i>
+                            <h6 class="fw-bold mb-1">Community Focused</h6>
+                            <small class="text-muted">Proudly serving fresh poultry and hearty local portions.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6" id="hours">
+                <div class="card bg-charcoal text-white border-0 shadow-lg p-4 p-md-5 rounded-4">
+                    <div class="text-orange fs-1 mb-2">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                    <h3 class="fw-bold mb-2">Visit & Collect</h3>
+                    <p class="text-white-50 mb-4">
+                        Drop by our kitchen counter for fresh walk-in purchases or pre-order collection.
+                    </p>
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                            <span>Monday - Friday</span>
+                            <strong class="text-orange">10:00 AM – 20:00 PM</strong>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                            <span>Saturday (Braai Special)</span>
+                            <strong class="text-orange">09:00 AM – 21:00 PM</strong>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                            <span>Sunday & Public Holidays</span>
+                            <strong class="text-orange">10:00 AM – 18:00 PM</strong>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 text-white-50 small">
+                        <i class="bi bi-geo-alt-fill text-orange fs-5"></i>
+                        <span>South Africa • Street-food counter & collection point</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Public Footer -->
+<footer class="bg-charcoal text-white-50 py-4 mt-auto border-top border-secondary">
+    <div class="container">
+        <div class="row align-items-center gy-3">
+            <div class="col-md-6 text-center text-md-start">
+                <div class="navbar-brand-chickenhub mb-1">
+                    <i class="bi bi-fire text-orange"></i>
+                    <span>Chicken<span class="brand-hub">Hub</span></span>
+                </div>
+                <p class="small mb-0 text-white-50">
+                    Business Management and Online Ordering Platform.
+                </p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <div class="d-flex justify-content-center justify-content-md-end gap-3 mb-1">
+                    <a href="{% url 'public:home' %}" class="text-white-50 text-decoration-none small hover-orange">Home</a>
+                    <a href="#menu" class="text-white-50 text-decoration-none small hover-orange">Menu</a>
+                    <a href="{% url 'accounts:login' %}" class="text-white-50 text-decoration-none small hover-orange">Staff Portal</a>
+                </div>
+                <small class="text-secondary">&copy; {% now "Y" %} ChickenHub. All rights reserved.</small>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}

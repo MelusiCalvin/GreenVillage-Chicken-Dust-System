@@ -1,0 +1,246 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<!-- Welcome Header Banner -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            Welcome back, {{ user.first_name|default:user.username }}!
+        </h2>
+        <p class="text-muted mb-0">
+            ChickenHub Operations Portal &bull; Today is {{ today|date:"l, d F Y" }}
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small">Access Level:</span>
+        <span class="{{ user.role_badge_class }} px-3 py-2 fs-6">
+            <i class="bi bi-shield-check me-1"></i> {{ user.get_role_display }}
+        </span>
+    </div>
+</div>
+
+<!-- Summary Cards (Placeholder Values for Foundation Phase) -->
+<div class="row g-3 mb-4">
+    <!-- Today's Sales -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-border-orange">
+            <div class="stat-card-title">Today's Sales</div>
+            <div class="stat-card-value text-orange">{{ stats.today_sales }}</div>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <small class="text-muted">{{ stats.today_sales_count }} transactions</small>
+                <span class="badge bg-light text-muted border">Sales Module</span>
+            </div>
+            <div class="stat-card-icon bg-light text-orange">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Customer Orders -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-border-blue">
+            <div class="stat-card-title">Pending Orders</div>
+            <div class="stat-card-value text-primary">{{ stats.pending_orders }}</div>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <small class="text-muted">Awaiting collection</small>
+                <span class="badge bg-light text-muted border">Orders Module</span>
+            </div>
+            <div class="stat-card-icon bg-light text-primary">
+                <i class="bi bi-clock-history"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Stock Items -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-border-green">
+            <div class="stat-card-title">Stock Items</div>
+            <div class="stat-card-value text-success">{{ stats.total_stock_items }}</div>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <small class="text-muted">Tracked ingredients & cuts</small>
+                <span class="badge bg-light text-muted border">Inventory Module</span>
+            </div>
+            <div class="stat-card-icon bg-light text-success">
+                <i class="bi bi-boxes"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low-Stock Alerts -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-border-danger">
+            <div class="stat-card-title">Low-Stock Items</div>
+            <div class="stat-card-value text-danger">{{ stats.low_stock_items }}</div>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <small class="text-muted">Below reorder threshold</small>
+                <span class="badge bg-light text-muted border">Inventory Module</span>
+            </div>
+            <div class="stat-card-icon bg-light text-danger">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+        <h5 class="fw-bold mb-0">
+            <i class="bi bi-lightning-charge-fill text-orange me-2"></i> Quick Actions
+        </h5>
+        <span class="badge bg-light text-secondary border">Operational Shortcuts</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="quick-action-btn position-relative" role="button" tabindex="0">
+                    <i class="bi bi-receipt"></i>
+                    <span>Record Sale</span>
+                    <small class="text-muted" style="font-size: 0.7rem;">POS Walk-in</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="quick-action-btn position-relative" role="button" tabindex="0">
+                    <i class="bi bi-truck"></i>
+                    <span>Add Purchase</span>
+                    <small class="text-muted" style="font-size: 0.7rem;">Poultry & Supplies</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="quick-action-btn position-relative" role="button" tabindex="0">
+                    <i class="bi bi-boxes"></i>
+                    <span>Check Stock</span>
+                    <small class="text-muted" style="font-size: 0.7rem;">Inventory Items</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="quick-action-btn position-relative" role="button" tabindex="0">
+                    <i class="bi bi-basket3"></i>
+                    <span>View Orders</span>
+                    <small class="text-muted" style="font-size: 0.7rem;">Customer Pickup</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="quick-action-btn position-relative" role="button" tabindex="0">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Add Expense</span>
+                    <small class="text-muted" style="font-size: 0.7rem;">Business Costs</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="quick-action-btn position-relative" role="button" tabindex="0">
+                    <i class="bi bi-file-earmark-bar-graph"></i>
+                    <span>Daily Reports</span>
+                    <small class="text-muted" style="font-size: 0.7rem;">Revenue & Profit</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Two-Column Information Section: Recent Activity & Role Permissions -->
+<div class="row g-4">
+    <!-- Recent Activity Feed -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-activity text-orange me-2"></i> Recent Activity
+                </h5>
+                <span class="badge bg-light text-secondary border">System Log</span>
+            </div>
+            <div class="card-body">
+                {% for item in recent_activities %}
+                    <div class="activity-item">
+                        <div class="activity-icon-wrapper">
+                            <i class="bi {{ item.icon }} text-orange"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold mb-0 text-dark">{{ item.title }}</h6>
+                                <span class="badge {{ item.badge_class }} small">{{ item.badge }}</span>
+                            </div>
+                            <p class="text-muted small mb-1">{{ item.description }}</p>
+                            <small class="text-secondary" style="font-size: 0.75rem;">
+                                <i class="bi bi-clock me-1"></i> {{ item.timestamp }}
+                            </small>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted small mb-0">No recent activity recorded yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Permissions & Foundation Notice -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-shield-lock-fill text-orange me-2"></i> Role Capabilities
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    Your account is assigned the <strong>{{ user.get_role_display }}</strong> role. Here is a summary of permissions:
+                </p>
+
+                <ul class="list-group list-group-flush small mb-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-cash me-2 text-success"></i> Sales & POS Recording</span>
+                        <span class="badge bg-success-subtle text-success">Granted</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-basket me-2 text-success"></i> Customer Order Management</span>
+                        <span class="badge bg-success-subtle text-success">Granted</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-truck me-2 {% if user.is_manager %}text-success{% else %}text-secondary{% endif %}"></i> Stock & Purchasing Management</span>
+                        {% if user.is_manager %}
+                            <span class="badge bg-success-subtle text-success">Granted</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Manager Only</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-wallet me-2 {% if user.is_manager %}text-success{% else %}text-secondary{% endif %}"></i> Business Expense Tracking</span>
+                        {% if user.is_manager %}
+                            <span class="badge bg-success-subtle text-success">Granted</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Manager Only</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-graph-up me-2 {% if user.is_owner %}text-success{% else %}text-secondary{% endif %}"></i> Financial & Profit Reports</span>
+                        {% if user.is_owner %}
+                            <span class="badge bg-success-subtle text-success">Granted</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Owner Only</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-people me-2 {% if user.is_owner %}text-success{% else %}text-secondary{% endif %}"></i> User Account Administration</span>
+                        {% if user.is_owner %}
+                            <span class="badge bg-success-subtle text-success">Granted</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Owner Only</span>
+                        {% endif %}
+                    </li>
+                </ul>
+
+                <div class="alert alert-light border small text-muted mb-0">
+                    <i class="bi bi-info-circle text-orange me-1"></i>
+                    <strong>Foundation Stage:</strong> Business modules will be introduced step-by-step in subsequent iterations.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

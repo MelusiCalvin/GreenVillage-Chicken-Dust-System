@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard | ChickenHub Management{% endblock %}
+
+{% block layout %}
+<div class="dashboard-wrapper">
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="dashboard-sidebar">
+        <!-- Sidebar Brand Header -->
+        <div class="sidebar-header">
+            <a class="navbar-brand-chickenhub text-decoration-none" href="{% url 'dashboard:index' %}">
+                <i class="bi bi-fire text-orange fs-4"></i>
+                <span class="fs-5">Chicken<span class="brand-hub">Hub</span></span>
+            </a>
+        </div>
+
+        <!-- User Role Profile Pill -->
+        <div class="px-3 py-3 border-bottom border-dark">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-charcoal-surface text-orange p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                    <i class="bi bi-person-fill fs-5"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="text-white fw-bold text-truncate small">
+                        {{ user.get_full_name|default:user.username }}
+                    </div>
+                    <span class="{{ user.role_badge_class }} py-1 px-2 font-monospace" style="font-size: 0.7rem;">
+                        {{ user.get_role_display|upper }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Menu Items -->
+        <div class="sidebar-menu">
+            <div class="sidebar-heading">Main Operations</div>
+            <a href="{% url 'dashboard:index' %}" class="sidebar-nav-link active">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <div class="sidebar-heading">Inventory & Supplies</div>
+            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+                <i class="bi bi-boxes"></i>
+                <span>Inventory & Stock</span>
+                <span class="badge bg-secondary ms-auto small">Soon</span>
+            </a>
+            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+                <i class="bi bi-truck"></i>
+                <span>Purchases & Suppliers</span>
+                <span class="badge bg-secondary ms-auto small">Soon</span>
+            </a>
+            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+                <i class="bi bi-egg-fried"></i>
+                <span>Products & Meals</span>
+                <span class="badge bg-secondary ms-auto small">Soon</span>
+            </a>
+
+            <div class="sidebar-heading">Sales & Orders</div>
+            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+                <i class="bi bi-receipt"></i>
+                <span>Sales & POS</span>
+                <span class="badge bg-secondary ms-auto small">Soon</span>
+            </a>
+            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+                <i class="bi bi-basket3"></i>
+                <span>Customer Orders</span>
+                <span class="badge bg-secondary ms-auto small">Soon</span>
+            </a>
+
+            <div class="sidebar-heading">Finance & Insights</div>
+            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+                <i class="bi bi-wallet2"></i>
+                <span>Expenses</span>
+                <span class="badge bg-secondary ms-auto small">Soon</span>
+            </a>
+            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Reports & Analytics</span>
+                <span class="badge bg-secondary ms-auto small">Soon</span>
+            </a>
+
+            {% if user.is_owner %}
+                <div class="sidebar-heading">Administration</div>
+                <a href="/admin/" target="_blank" class="sidebar-nav-link">
+                    <i class="bi bi-sliders"></i>
+                    <span>Django Admin</span>
+                    <i class="bi bi-box-arrow-up-right ms-auto small text-muted"></i>
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Footer Action -->
+        <div class="sidebar-footer">
+            <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Sign Out</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="dashboard-main">
+        <!-- Top Navigation Bar -->
+        <header class="dashboard-topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button id="sidebarToggle" class="btn btn-sm btn-light border d-lg-none" type="button" aria-label="Toggle sidebar">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <div class="d-none d-sm-block">
+                    <span class="text-muted small">Business Management & Ordering Portal</span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'public:home' %}" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex align-items-center gap-1" target="_blank">
+                    <i class="bi bi-globe"></i>
+                    <span>View Public Site</span>
+                </a>
+
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light border dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle text-orange"></i>
+                        <span class="d-none d-sm-inline fw-semibold">{{ user.username }}</span>
+                        <span class="{{ user.role_badge_class }} d-none d-md-inline-block">{{ user.get_role_display }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                        <li class="px-3 py-2 border-bottom">
+                            <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                            <small class="text-muted">{{ user.email|default:"No email set" }}</small>
+                            <div class="mt-1"><span class="{{ user.role_badge_class }}">{{ user.get_role_display }}</span></div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2" href="{% url 'public:home' %}">
+                                <i class="bi bi-shop me-2"></i> Public Home
+                            </a>
+                        </li>
+                        {% if user.is_owner %}
+                            <li>
+                                <a class="dropdown-item py-2" href="/admin/" target="_blank">
+                                    <i class="bi bi-gear me-2"></i> Django System Admin
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" action="{% url 'accounts:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item text-danger py-2">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Sign Out
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages Display -->
+        {% if messages %}
+            <div class="container-fluid px-4 pt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show d-flex align-items-center" role="alert">
+                        <i class="bi me-2 {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'danger' %}bi-exclamation-triangle-fill{% elif message.tags == 'warning' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                        <div>{{ message }}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Dashboard View Content -->
+        <main class="dashboard-content">
+            {% block dashboard_content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock layout %}
