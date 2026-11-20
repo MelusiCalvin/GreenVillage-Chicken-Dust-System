@@ -5,9 +5,13 @@ from django.utils.translation import gettext_lazy as _
 
 class CustomUserManager(BaseUserManager):
     """
-    Custom user manager that ensures superusers are automatically
-    assigned the OWNER role and staff status.
+    Custom user manager that ensures staff users have staff status
+    and superusers are automatically assigned the OWNER role.
     """
+    def create_user(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        return super().create_user(username, email, password, **extra_fields)
+
     def create_superuser(self, username, email=None, password=None, **extra_fields):
         extra_fields.setdefault('role', User.Role.OWNER)
         extra_fields.setdefault('is_staff', True)
@@ -42,6 +46,7 @@ class User(AbstractUser):
     objects = CustomUserManager()
 
     class Meta:
+        app_label = 'accounts'
         verbose_name = _('User Account')
         verbose_name_plural = _('User Accounts')
         ordering = ['username']
@@ -54,7 +59,7 @@ class User(AbstractUser):
 
     @property
     def is_owner(self):
-        """Owner has full access to the system and configuration."""
+        """Owner has full access to the system, user management and reports."""
         return self.is_superuser or self.role == self.Role.OWNER
 
     @property
