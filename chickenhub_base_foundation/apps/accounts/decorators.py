@@ -1,7 +1,6 @@
 from functools import wraps
 from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 
@@ -9,8 +8,8 @@ from django.urls import reverse_lazy
 def role_required(*allowed_roles, redirect_url='dashboard:index'):
     """
     Decorator that verifies if the logged-in user has one of the allowed roles
-    (or is a superuser). If not authenticated, redirects to staff login.
-    If authenticated but unauthorized, redirects with a warning message.
+    (or is a superuser). If not authenticated, redirects to staff login with ?next=.
+    If authenticated but unauthorized, redirects with an access-denied warning message.
     """
     def decorator(view_func):
         @wraps(view_func)
@@ -19,6 +18,10 @@ def role_required(*allowed_roles, redirect_url='dashboard:index'):
                 messages.info(request, "Please log in with your staff account to continue.")
                 login_url = reverse_lazy('accounts:login')
                 return redirect(f"{login_url}?next={request.path}")
+
+            if not request.user.is_active:
+                messages.error(request, "Your staff account has been deactivated. Please contact the owner.")
+                return redirect('accounts:logout')
 
             if request.user.is_superuser or request.user.role in allowed_roles:
                 return view_func(request, *args, **kwargs)
@@ -53,7 +56,9 @@ def staff_required(view_func):
 
 class RoleRequiredMixin(AccessMixin):
     """
-    CBV mixin that verifies if the user belongs to one of the specified allowed_roles.
+    Class-based view mixin that verifies if the user belongs to one of the specified allowed_roles.
+    Redirects unauthenticated visitors to login with ?next=.
+    Redirects unauthorized staff with a warning message.
     """
     allowed_roles = []
     unauthorized_redirect_url = 'dashboard:index'
@@ -61,7 +66,12 @@ class RoleRequiredMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             messages.info(request, "Please log in with your staff account to continue.")
-            return self.handle_no_permission()
+            login_url = reverse_lazy('accounts:login')
+            return redirect(f"{login_url}?next={request.path}")
+
+        if not request.user.is_active:
+            messages.error(request, "Your staff account has been deactivated. Please contact the owner.")
+            return redirect('accounts:logout')
 
         if request.user.is_superuser or request.user.role in self.allowed_roles:
             return super().dispatch(request, *args, **kwargs)
@@ -71,3 +81,27 @@ class RoleRequiredMixin(AccessMixin):
             f"Access denied. Your role ({request.user.get_role_display()}) does not have permission to view that section."
         )
         return redirect(self.unauthorized_redirect_url)
+
+
+class OwnerRequiredMixin(RoleRequiredMixin):
+    """CBV mixin that restricts access strictly to Owners (and Superusers)."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import User
+        self.allowed_roles = [User.Role.OWNER]
+
+
+class ManagerRequiredMixin(RoleRequiredMixin):
+    """CBV mixin that permits Owners and Managers."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import User
+        self.allowed_roles = [User.Role.OWNER, User.Role.MANAGER]
+
+
+class StaffRequiredMixin(RoleRequiredMixin):
+    """CBV mixin that permits any active staff member (Owner, Manager, Employee)."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import User
+        self.allowed_roles = [User.Role.OWNER, User.Role.MANAGER, User.Role.EMPLOYEE]

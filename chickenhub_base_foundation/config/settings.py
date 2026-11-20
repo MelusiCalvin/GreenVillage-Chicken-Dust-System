@@ -16,9 +16,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / '.env')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
-
 SECRET_KEY = os.getenv(
     'DJANGO_SECRET_KEY',
     'django-insecure-chickenhub-dev-key-change-in-production-2026'
