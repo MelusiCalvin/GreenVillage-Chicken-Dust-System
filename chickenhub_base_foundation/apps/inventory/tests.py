@@ -223,3 +223,236 @@ class InventoryViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Lunch prep batch pap')
         self.assertContains(response, 'Maize Meal 10kg')
+
+
+class ChickenProcessingViewTests(TestCase):
+    """
+    Tests for Chicken Processing:
+    - Select whole chicken item and enter quantity
+    - Record processing date and actual portion outputs
+    - Check sufficient whole chicken stock is available
+    - Deduct whole chicken stock and increase portions stock
+    - Record StockMovement for both reduction (PROCESSED_OUT) and additions (PROCESSED_IN)
+    - Preserve processing history and details
+    - Prevent negative stock quantities
+    - Ensure database transaction rollback if invalid
+    - Enforce business rule: user enters actual outputs, not assumed fixed yields
+    """
+    def setUp(self):
+        self.manager = User.objects.create_user(
+            username='chef_manager',
+            password='Password123!',
+            role=User.Role.MANAGER,
+            is_staff=True,
+        )
+        self.employee = User.objects.create_user(
+            username='kitchen_employee',
+            password='Password123!',
+            role=User.Role.EMPLOYEE,
+            is_staff=True,
+        )
+
+        self.whole_chicken = InventoryItem.objects.create(
+            item_name='Fresh Whole Chicken',
+            item_type=InventoryItem.ItemType.WHOLE_CHICKEN,
+            unit_of_measure=InventoryItem.UnitOfMeasure.UNIT,
+            quantity_on_hand=Decimal('25.00'),
+            reorder_level=Decimal('10.00'),
+        )
+        self.portion_half = InventoryItem.objects.create(
+            item_name='Half Chicken Cut',
+            item_type=InventoryItem.ItemType.CHICKEN_PORTION,
+            unit_of_measure=InventoryItem.UnitOfMeasure.UNIT,
+            quantity_on_hand=Decimal('0.00'),
+            reorder_level=Decimal('5.00'),
+        )
+        self.portion_quarter = InventoryItem.objects.create(
+            item_name='Quarter Chicken Cut',
+            item_type=InventoryItem.ItemType.CHICKEN_PORTION,
+            unit_of_measure=InventoryItem.UnitOfMeasure.UNIT,
+            quantity_on_hand=Decimal('4.00'),
+            reorder_level=Decimal('10.00'),
+        )
+        self.portion_wings = InventoryItem.objects.create(
+            item_name='Chicken Wings Pack',
+            item_type=InventoryItem.ItemType.CHICKEN_PORTION,
+            unit_of_measure=InventoryItem.UnitOfMeasure.PACK,
+            quantity_on_hand=Decimal('2.00'),
+            reorder_level=Decimal('5.00'),
+        )
+
+    def test_chicken_processing_success_and_atomic_stock_updates(self):
+        """
+        Process 10 whole chickens into:
+        - 10 Half Chicken Cuts
+        - 15 Quarter Chicken Cuts
+        - 5 Chicken Wings Packs
+        Verifies:
+        - Whole chicken reduced: 25.00 - 10.00 = 15.00
+        - Portion stocks increased accordingly
+        - PROCESSED_OUT and PROCESSED_IN movements logged with matching PROC reference
+        """
+        self.client.login(username='chef_manager', password='Password123!')
+        url = reverse('inventory:processing_create')
+
+        post_data = {
+            'whole_chicken_item': self.whole_chicken.pk,
+            'whole_chicken_quantity': '10',
+            'processing_date': '2026-11-21',
+            'notes': 'Morning butchery batch: cut 10 birds into halves, quarters and wings.',
+
+            'outputs-TOTAL_FORMS': '3',
+            'outputs-INITIAL_FORMS': '0',
+            'outputs-MIN_NUM_FORMS': '1',
+            'outputs-MAX_NUM_FORMS': '1000',
+
+            # Output 0: Half chicken
+            'outputs-0-inventory_item': self.portion_half.pk,
+            'outputs-0-quantity_produced': '10',
+
+            # Output 1: Quarter chicken
+            'outputs-1-inventory_item': self.portion_quarter.pk,
+            'outputs-1-quantity_produced': '15',
+
+            # Output 2: Wings
+            'outputs-2-inventory_item': self.portion_wings.pk,
+            'outputs-2-quantity_produced': '5',
+        }
+
+        response = self.client.post(url, post_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # 1. Verify ChickenProcessing record created
+        processing = ChickenProcessing.objects.latest('created_at')
+        self.assertEqual(processing.whole_chicken_item, self.whole_chicken)
+        self.assertEqual(processing.whole_chicken_quantity, Decimal('10.00'))
+        self.assertEqual(processing.recorded_by, self.manager)
+        self.assertEqual(processing.outputs.count(), 3)
+        self.assertEqual(processing.total_portions_produced, Decimal('30.00'))
+
+        # 2. Verify whole chicken stock deduction
+        self.whole_chicken.refresh_from_db()
+        self.assertEqual(self.whole_chicken.quantity_on_hand, Decimal('15.00'))
+
+        # 3. Verify portions stock additions
+        self.portion_half.refresh_from_db()
+        self.assertEqual(self.portion_half.quantity_on_hand, Decimal('10.00'))  # was 0 + 10
+
+        self.portion_quarter.refresh_from_db()
+        self.assertEqual(self.portion_quarter.quantity_on_hand, Decimal('19.00'))  # was 4 + 15
+
+        self.portion_wings.refresh_from_db()
+        self.assertEqual(self.portion_wings.quantity_on_hand, Decimal('7.00'))  # was 2 + 5
+
+        # 4. Verify Stock Movements
+        # Reduction movement
+        out_movement = StockMovement.objects.get(
+            inventory_item=self.whole_chicken,
+            movement_type=StockMovement.MovementType.PROCESSED_OUT
+        )
+        self.assertEqual(out_movement.quantity, Decimal('-10.00'))
+        self.assertEqual(out_movement.reference_number, f"PROC-{processing.id}")
+
+        # Additions movements
+        in_movements = StockMovement.objects.filter(
+            movement_type=StockMovement.MovementType.PROCESSED_IN,
+            reference_number=f"PROC-{processing.id}"
+        )
+        self.assertEqual(in_movements.count(), 3)
+
+    def test_processing_fails_when_insufficient_whole_chicken_stock(self):
+        """
+        Attempting to process more birds than available must be rejected and prevent negative stock.
+        """
+        self.client.login(username='kitchen_employee', password='Password123!')
+        url = reverse('inventory:processing_create')
+
+        # Stock is 25.00, user attempts to process 30.00 birds
+        post_data = {
+            'whole_chicken_item': self.whole_chicken.pk,
+            'whole_chicken_quantity': '30',
+            'processing_date': '2026-11-21',
+            'notes': 'Over-capacity processing attempt',
+
+            'outputs-TOTAL_FORMS': '1',
+            'outputs-INITIAL_FORMS': '0',
+            'outputs-MIN_NUM_FORMS': '1',
+            'outputs-MAX_NUM_FORMS': '1000',
+
+            'outputs-0-inventory_item': self.portion_half.pk,
+            'outputs-0-quantity_produced': '60',
+        }
+
+        response = self.client.post(url, post_data)
+        self.assertEqual(response.status_code, 200)
+
+        # Stock should NOT have changed
+        self.whole_chicken.refresh_from_db()
+        self.assertEqual(self.whole_chicken.quantity_on_hand, Decimal('25.00'))
+        self.portion_half.refresh_from_db()
+        self.assertEqual(self.portion_half.quantity_on_hand, Decimal('0.00'))
+
+        # No processing record created
+        self.assertFalse(ChickenProcessing.objects.filter(notes='Over-capacity processing attempt').exists())
+
+    def test_processing_rejects_duplicate_portion_selection(self):
+        """
+        Selecting the same portion item in multiple rows should raise a validation error.
+        """
+        self.client.login(username='chef_manager', password='Password123!')
+        url = reverse('inventory:processing_create')
+
+        post_data = {
+            'whole_chicken_item': self.whole_chicken.pk,
+            'whole_chicken_quantity': '5',
+            'processing_date': '2026-11-21',
+
+            'outputs-TOTAL_FORMS': '2',
+            'outputs-INITIAL_FORMS': '0',
+            'outputs-MIN_NUM_FORMS': '1',
+            'outputs-MAX_NUM_FORMS': '1000',
+
+            # Row 0: Half chicken
+            'outputs-0-inventory_item': self.portion_half.pk,
+            'outputs-0-quantity_produced': '5',
+
+            # Row 1: Also Half chicken (duplicate)
+            'outputs-1-inventory_item': self.portion_half.pk,
+            'outputs-1-quantity_produced': '5',
+        }
+
+        response = self.client.post(url, post_data)
+        self.assertEqual(response.status_code, 200)
+        self.whole_chicken.refresh_from_db()
+        self.assertEqual(self.whole_chicken.quantity_on_hand, Decimal('25.00'))  # Unchanged
+
+    def test_processing_history_and_detail_views(self):
+        """
+        Verify that processing history and detail views render correctly with batch outputs.
+        """
+        self.client.login(username='chef_manager', password='Password123!')
+
+        processing = ChickenProcessing.objects.create(
+            whole_chicken_item=self.whole_chicken,
+            whole_chicken_quantity=Decimal('8.00'),
+            recorded_by=self.manager,
+            notes='Friday evening prep'
+        )
+        ProcessingOutput.objects.create(
+            processing=processing,
+            inventory_item=self.portion_half,
+            quantity_produced=Decimal('16.00')
+        )
+
+        # List view
+        list_response = self.client.get(reverse('inventory:processing_list'))
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, 'Friday evening prep')
+        self.assertContains(list_response, '8')
+
+        # Detail view
+        detail_response = self.client.get(reverse('inventory:processing_detail', args=[processing.pk]))
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(detail_response, 'PROC-')
+        self.assertContains(detail_response, 'Half Chicken Cut')
+        self.assertContains(detail_response, '16')

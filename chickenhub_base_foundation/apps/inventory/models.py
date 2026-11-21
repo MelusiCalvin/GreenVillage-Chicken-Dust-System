@@ -192,6 +192,22 @@ class ChickenProcessing(models.Model):
     def __str__(self):
         return f"Processing on {self.processing_date}: {self.whole_chicken_quantity} birds"
 
+    @property
+    def total_portions_produced(self):
+        """Returns total quantity of all portions produced from this batch."""
+        return sum(output.quantity_produced for output in self.outputs.all())
+
+    @property
+    def outputs_summary(self):
+        """Returns a readable summary of portions produced."""
+        outputs = self.outputs.all()
+        if not outputs:
+            return "No outputs recorded"
+        return ", ".join(
+            f"{o.quantity_produced:.0f if o.quantity_produced % 1 == 0 else o.quantity_produced} x {o.inventory_item.item_name}"
+            for o in outputs
+        )
+
 
 class ProcessingOutput(models.Model):
     """

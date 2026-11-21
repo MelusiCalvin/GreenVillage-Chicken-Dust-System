@@ -44,9 +44,13 @@
             </a>
 
             <div class="sidebar-heading">Inventory & Supplies</div>
-            <a href="{% url 'inventory:dashboard' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'inventory' %}active{% endif %}">
+            <a href="{% url 'inventory:dashboard' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'inventory' and 'processing' not in request.path %}active{% endif %}">
                 <i class="bi bi-boxes"></i>
                 <span>Inventory & Stock</span>
+            </a>
+            <a href="{% url 'inventory:processing_list' %}" class="sidebar-nav-link {% if 'processing' in request.path %}active{% endif %}">
+                <i class="bi bi-scissors"></i>
+                <span>Chicken Processing</span>
             </a>
             {% if user.is_manager %}
             <a href="{% url 'purchases:list' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'purchases' %}active{% endif %}">

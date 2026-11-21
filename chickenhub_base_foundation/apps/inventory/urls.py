@@ -16,4 +16,9 @@ urlpatterns = [
     path('movements/wasted/', views.RecordStockWastedView.as_view(), name='record_wasted'),
     path('movements/adjust/', views.RecordStockAdjustmentView.as_view(), name='record_adjustment'),
     path('movements/receive/', views.RecordStockReceivedManualView.as_view(), name='record_receive'),
+
+    # Chicken Processing (Whole Chickens -> Portions)
+    path('processing/', views.ChickenProcessingListView.as_view(), name='processing_list'),
+    path('processing/new/', views.ChickenProcessingCreateView.as_view(), name='processing_create'),
+    path('processing/<int:pk>/', views.ChickenProcessingDetailView.as_view(), name='processing_detail'),
 ]
