@@ -1,6 +1,7 @@
 import uuid
 from decimal import Decimal
 from django.core.validators import MinValueValidator
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -53,7 +54,7 @@ class CustomerOrder(models.Model):
         PENDING = 'PENDING', _('Pending')
         ACCEPTED = 'ACCEPTED', _('Accepted')
         PREPARING = 'PREPARING', _('Preparing')
-        READY = 'READY', _('Ready for Collection')
+        READY = 'READY', _('Ready')
         COLLECTED = 'COLLECTED', _('Collected')
         CANCELLED = 'CANCELLED', _('Cancelled')
 
@@ -97,6 +98,13 @@ class CustomerOrder(models.Model):
     special_instructions = models.TextField(
         blank=True,
         verbose_name=_('Special Instructions / Notes')
+    )
+    rejection_reason = models.TextField(blank=True, verbose_name=_('Rejection Reason'))
+    inventory_deducted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name=_('Inventory Deducted At'),
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -177,3 +185,20 @@ class OrderItem(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = self.quantity * self.unit_price
         super().save(*args, **kwargs)
+
+
+class OrderStatusHistory(models.Model):
+    order = models.ForeignKey(CustomerOrder, on_delete=models.PROTECT, related_name='status_history')
+    previous_status = models.CharField(max_length=20, blank=True)
+    new_status = models.CharField(max_length=20, choices=CustomerOrder.OrderStatus.choices)
+    reason = models.TextField(blank=True)
+    changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT)
+    changed_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['changed_at', 'pk']
+        verbose_name = _('Order Status History')
+        verbose_name_plural = _('Order Status History')
+
+    def __str__(self):
+        return f'{self.order.order_reference}: {self.previous_status} → {self.new_status}'

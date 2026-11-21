@@ -23,7 +23,10 @@
                     <a class="nav-link active" aria-current="page" href="{% url 'public:home' %}">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#menu">Our Menu</a>
+                    <a class="nav-link" href="{% url 'orders:menu' %}">Order Collection</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'orders:track' %}">Track Order</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#about">About Chicken Dust</a>
@@ -51,7 +54,7 @@
                     <a href="{% url 'accounts:login' %}" class="btn btn-sm btn-outline-light">
                         <i class="bi bi-person-lock me-1"></i> Staff Portal
                     </a>
-                    <a href="#menu" class="btn btn-sm btn-chickenhub">
+                    <a href="{% url 'orders:menu' %}" class="btn btn-sm btn-chickenhub">
                         <i class="bi bi-bag-check me-1"></i> Order Online
                     </a>
                 {% endif %}
@@ -76,8 +79,8 @@
                     Serving succulent whole chickens, quarter & half portions, and traditional sides like pap and homemade gravy.
                 </p>
                 <div class="d-flex flex-wrap gap-3">
-                    <a href="#menu" class="btn btn-chickenhub btn-lg px-4">
-                        <i class="bi bi-menu-button-wide me-2"></i> Browse Menu
+                    <a href="{% url 'orders:menu' %}" class="btn btn-chickenhub btn-lg px-4">
+                        <i class="bi bi-menu-button-wide me-2"></i> Browse Menu & Order
                     </a>
                     {% if not user.is_authenticated %}
                         <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg px-4">

@@ -1,0 +1,24 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}{{ order.order_reference }} | ChickenHub{% endblock %}
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4"><div><h3 class="fw-bold mb-1">Order {{ order.order_reference }}</h3><span class="badge bg-secondary">{{ order.get_order_status_display }}</span></div><a class="btn btn-outline-secondary" href="{% url 'orders:staff_list' %}">Back to orders</a></div>
+  <div class="row g-4"><div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4"><div class="card-header fw-semibold">Order items</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Subtotal</th></tr></thead><tbody>{% for item in order.items.all %}<tr><td>{{ item.product.product_name }}</td><td class="text-end">{{ item.quantity }}</td><td class="text-end">R {{ item.unit_price|floatformat:2 }}</td><td class="text-end">R {{ item.subtotal|floatformat:2 }}</td></tr>{% endfor %}</tbody><tfoot><tr><th colspan="3" class="text-end">Total</th><th class="text-end">R {{ order.total_amount|floatformat:2 }}</th></tr></tfoot></table></div></div>
+    <div class="card border-0 shadow-sm"><div class="card-header fw-semibold">Order history</div><ul class="list-group list-group-flush">{% for event in order.status_history.all %}<li class="list-group-item d-flex justify-content-between gap-3"><div><strong>{{ event.new_status|title }}</strong>{% if event.reason %}<div class="small text-muted">{{ event.reason }}</div>{% endif %}<div class="small text-muted">{% if event.changed_by %}{{ event.changed_by.get_full_name|default:event.changed_by.username }}{% else %}Customer{% endif %}</div></div><time class="small text-muted text-nowrap">{{ event.changed_at|date:"d M Y H:i" }}</time></li>{% empty %}<li class="list-group-item text-muted">No status changes recorded.</li>{% endfor %}</ul></div>
+  </div><div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-4"><div class="card-header fw-semibold">Customer</div><div class="card-body"><div class="fw-bold">{{ order.customer.first_name }} {{ order.customer.last_name }}</div><div>{{ order.customer.phone_number }}</div>{% if order.customer.email %}<div>{{ order.customer.email }}</div>{% endif %}<div class="small text-muted mt-2">Placed {{ order.order_date|date:"d M Y H:i" }}</div>{% if order.collection_time %}<div class="mt-2">Requested collection: {{ order.collection_time }}</div>{% endif %}{% if order.special_instructions %}<hr><small class="text-muted">Customer notes</small><p class="mb-0">{{ order.special_instructions }}</p>{% endif %}</div></div>
+    {% if order.rejection_reason %}<div class="alert alert-danger"><strong>Rejection reason</strong><div>{{ order.rejection_reason }}</div></div>{% endif %}
+    {% if allowed_transitions %}<div class="card border-0 shadow-sm"><div class="card-header fw-semibold">Update order</div><div class="card-body">
+      {% for status in allowed_transitions %}
+      <form method="post" class="mb-3">{% csrf_token %}<input type="hidden" name="status" value="{{ status }}">
+        {% if status == 'CANCELLED' %}<label class="form-label">Reason for rejection</label><textarea class="form-control mb-2" name="reason" rows="2" required></textarea>
+        {% elif status == 'PREPARING' %}<div class="small text-muted mb-2">Ingredients and portions will be deducted once as preparation begins.</div>
+        {% elif status == 'COLLECTED' %}<div class="small text-muted mb-2">This records one linked sale. Stock is not deducted again.</div>{% endif %}
+        <button class="btn {% if status == 'CANCELLED' %}btn-outline-danger{% else %}btn-orange{% endif %} w-100" type="submit">{% if status == 'CANCELLED' %}Reject order{% else %}Mark {{ status|title }}{% endif %}</button>
+      </form>
+      {% endfor %}
+    </div></div>{% elif order.order_status == 'COLLECTED' and order.sale %}<div class="alert alert-success">Linked sale: <a href="{% url 'sales:detail' order.sale.pk %}">{{ order.sale.receipt_number }}</a></div>{% endif %}
+  </div></div>
+</div>
+{% endblock %}

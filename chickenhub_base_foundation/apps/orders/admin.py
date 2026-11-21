@@ -1,11 +1,18 @@
 from django.contrib import admin
-from .models import Customer, CustomerOrder, OrderItem
+from .models import Customer, CustomerOrder, OrderItem, OrderStatusHistory
 
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
     readonly_fields = ('subtotal',)
+
+
+class OrderStatusHistoryInline(admin.TabularInline):
+    model = OrderStatusHistory
+    extra = 0
+    can_delete = False
+    readonly_fields = ('previous_status', 'new_status', 'reason', 'changed_by', 'changed_at')
 
 
 @admin.register(Customer)
@@ -21,4 +28,5 @@ class CustomerOrderAdmin(admin.ModelAdmin):
     list_filter = ('order_status', 'order_date')
     search_fields = ('order_reference', 'customer__first_name', 'customer__last_name', 'customer__phone_number')
     date_hierarchy = 'order_date'
-    inlines = [OrderItemInline]
+    inlines = [OrderItemInline, OrderStatusHistoryInline]
+    readonly_fields = ('order_reference', 'inventory_deducted_at', 'rejection_reason')
