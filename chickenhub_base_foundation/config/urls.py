@@ -23,6 +23,7 @@ urlpatterns = [
     path('inventory/', include('apps.inventory.urls', namespace='inventory')),
     path('purchases/', include('apps.purchases.urls', namespace='purchases')),
     path('products/', include('apps.products.urls', namespace='products')),
+    path('sales/', include('apps.sales.urls', namespace='sales')),
 
     # Django built-in admin
     path('admin/', admin.site.urls),
