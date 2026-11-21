@@ -1,0 +1,240 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Record Chicken Processing | ChickenHub{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-scissors text-orange me-2"></i>Record Chicken Processing
+            </h4>
+            <p class="text-muted small mb-0">
+                Cut whole chickens into portions (half chickens, quarters, wings, etc.) and update stock balances atomically.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:processing_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-clock-history me-1"></i> Processing History
+            </a>
+            <a href="{% url 'inventory:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Inventory Dashboard
+            </a>
+        </div>
+    </div>
+
+    <form method="post" id="chickenProcessingForm" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                    <div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in formset.non_form_errors %}
+                    <div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="row g-4">
+            <!-- Left: Whole Chicken Input Card & Portions Formset -->
+            <div class="col-lg-8">
+                <!-- 1. Whole Chicken Processing Input -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-charcoal text-white py-3 d-flex align-items-center justify-content-between">
+                        <span class="fw-semibold">
+                            <i class="bi bi-box-arrow-up-right me-2 text-warning"></i>Step 1: Whole Chicken Input (Stock Deduction)
+                        </span>
+                        <span class="badge bg-secondary">Deducted from stock</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.whole_chicken_item.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.whole_chicken_item.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.whole_chicken_item }}
+                                {% if form.whole_chicken_item.errors %}
+                                    <div class="text-danger small mt-1">{{ form.whole_chicken_item.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">Select the whole chicken batch/stock item to be cut.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.whole_chicken_quantity.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.whole_chicken_quantity.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.whole_chicken_quantity }}
+                                {% if form.whole_chicken_quantity.errors %}
+                                    <div class="text-danger small mt-1">{{ form.whole_chicken_quantity.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">{{ form.whole_chicken_quantity.help_text }}</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label for="{{ form.processing_date.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.processing_date.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.processing_date }}
+                                {% if form.processing_date.errors %}
+                                    <div class="text-danger small mt-1">{{ form.processing_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.notes.label }}
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Actual Portions Produced Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-charcoal text-white py-3 d-flex align-items-center justify-content-between">
+                        <span class="fw-semibold">
+                            <i class="bi bi-box-arrow-in-down me-2 text-success"></i>Step 2: Actual Portions Produced (Stock Addition)
+                        </span>
+                        <span class="badge bg-success">Added to inventory</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="small text-muted mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>Important:</strong> Outputs are entered based on <em>actual cuts produced</em> from the kitchen prep table. One whole chicken does not have a fixed portion count (e.g. 10 birds can yield 20 half chickens, or 40 quarter chickens, or a mixture of cuts).
+                        </p>
+
+                        {{ formset.management_form }}
+
+                        <div class="table-responsive">
+                            <table class="table align-middle" id="outputsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 60%;">Portion Cut / Item</th>
+                                        <th style="width: 30%;">Actual Quantity Produced</th>
+                                        <th style="width: 10%;" class="text-center">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for f in formset %}
+                                        <tr class="output-form-row">
+                                            <td>
+                                                {{ f.id }}
+                                                {{ f.inventory_item }}
+                                                {% if f.inventory_item.errors %}
+                                                    <div class="text-danger small">{{ f.inventory_item.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ f.quantity_produced }}
+                                                {% if f.quantity_produced.errors %}
+                                                    <div class="text-danger small">{{ f.quantity_produced.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if f.DELETE %}
+                                                    <div class="form-check d-flex justify-content-center">
+                                                        {{ f.DELETE }}
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="small text-muted">
+                            <i class="bi bi-lightbulb me-1"></i> Leave unused extra rows blank; they are ignored automatically.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-orange px-4 py-2 fw-semibold">
+                        <i class="bi bi-check2-circle me-1"></i> Save Processing Record & Update Stock
+                    </button>
+                    <a href="{% url 'inventory:dashboard' %}" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: Stock Guidance & Live Status Card -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm bg-charcoal text-white mb-4">
+                    <div class="card-header bg-dark border-secondary py-3">
+                        <span class="fw-semibold text-orange">
+                            <i class="bi bi-shield-check me-2"></i>Atomic Processing Rules
+                        </span>
+                    </div>
+                    <div class="card-body p-4 small">
+                        <div class="mb-3 pb-3 border-bottom border-secondary">
+                            <div class="text-white-50">Sufficient Stock Validation</div>
+                            <div class="text-white fw-bold mt-1">Prevents Negative Stock</div>
+                            <p class="text-white-50 mt-1 mb-0">
+                                The system checks that the selected whole chicken stock has sufficient birds available before permitting processing.
+                            </p>
+                        </div>
+                        <div class="mb-3 pb-3 border-bottom border-secondary">
+                            <div class="text-white-50">Single Database Transaction</div>
+                            <div class="text-white fw-bold mt-1">No Orphaned Inventory</div>
+                            <p class="text-white-50 mt-1 mb-0">
+                                Whole chicken deduction and portion additions are executed in a single atomic database transaction. If any part fails, all stock changes rollback.
+                            </p>
+                        </div>
+                        <div class="mb-0">
+                            <div class="text-white-50">Dual Audit Trail</div>
+                            <div class="text-white fw-bold mt-1">Full Traceability</div>
+                            <p class="text-white-50 mt-1 mb-0">
+                                Generates <span class="badge bg-warning text-dark">PROCESSED_OUT</span> for the whole birds deducted, and <span class="badge bg-success">PROCESSED_IN</span> for each portion cut produced.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Available Whole Chicken Stock Reference -->
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="fw-bold mb-0 text-charcoal">
+                            <i class="bi bi-boxes text-orange me-2"></i>Current Whole Chicken Stock
+                        </h6>
+                    </div>
+                    <div class="card-body p-3">
+                        {% if whole_chicken_items %}
+                            <ul class="list-group list-group-flush small">
+                                {% for chk in whole_chicken_items %}
+                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0">
+                                        <span>{{ chk.item_name }}</span>
+                                        <span class="fw-bold {% if chk.quantity_on_hand <= 0 %}text-danger{% else %}text-success{% endif %}">
+                                            {{ chk.quantity_on_hand }} birds
+                                        </span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="text-danger small">
+                                <i class="bi bi-exclamation-circle me-1"></i> No whole chicken inventory items registered.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

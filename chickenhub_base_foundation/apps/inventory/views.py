@@ -8,13 +8,15 @@ from django.views import View
 
 from apps.accounts.decorators import ManagerRequiredMixin, StaffRequiredMixin
 from .forms import (
+    ChickenProcessingForm,
     InventoryItemForm,
     ManualStockReceiveForm,
+    ProcessingOutputFormSet,
     StockAdjustmentForm,
     StockUsageForm,
     StockWastageForm,
 )
-from .models import InventoryItem, StockMovement
+from .models import ChickenProcessing, InventoryItem, ProcessingOutput, StockMovement
 
 
 class InventoryDashboardView(StaffRequiredMixin, View):
@@ -424,3 +426,202 @@ class RecordStockReceivedManualView(ManagerRequiredMixin, View):
 
         messages.error(request, "Please correct the errors below.")
         return render(request, self.template_name, {'form': form})
+
+
+# ===========================================================================
+# Chicken Processing Views (Whole Chicken -> Portions)
+# ===========================================================================
+
+class ChickenProcessingCreateView(StaffRequiredMixin, View):
+    """
+    Record whole chicken processing into portions.
+    1. Selects whole chicken item.
+    2. Enters quantity of whole chickens processed.
+    3. Records processing date.
+    4. Records actual portions produced (not fixed yields; user enters exact outputs).
+    5. Adds optional processing notes.
+    6. Uses database transaction:
+       - Checks sufficient whole chicken stock is available.
+       - Deducts whole chicken stock.
+       - Increases inventory for all portions produced.
+       - Records stock movements for reduction (PROCESSED_OUT) and additions (PROCESSED_IN).
+       - Prevents negative stock.
+    """
+    template_name = 'inventory/chicken_processing_form.html'
+
+    def get(self, request):
+        form = ChickenProcessingForm()
+        dummy_processing = ChickenProcessing()
+        formset = ProcessingOutputFormSet(instance=dummy_processing)
+
+        whole_chicken_items = InventoryItem.objects.filter(
+            item_type=InventoryItem.ItemType.WHOLE_CHICKEN,
+            is_active=True,
+        )
+        portion_items = InventoryItem.objects.filter(
+            item_type=InventoryItem.ItemType.CHICKEN_PORTION,
+            is_active=True,
+        )
+
+        return render(request, self.template_name, {
+            'form': form,
+            'formset': formset,
+            'whole_chicken_items': whole_chicken_items,
+            'portion_items': portion_items,
+        })
+
+    def post(self, request):
+        form = ChickenProcessingForm(request.POST)
+        dummy_processing = ChickenProcessing()
+        formset = ProcessingOutputFormSet(request.POST, instance=dummy_processing)
+
+        if form.is_valid() and formset.is_valid():
+            whole_item = form.cleaned_data['whole_chicken_item']
+            qty_processed = form.cleaned_data['whole_chicken_quantity']
+            proc_date = form.cleaned_data['processing_date']
+            notes = form.cleaned_data.get('notes', '').strip()
+
+            # Filter valid output rows
+            valid_outputs = [
+                f for f in formset
+                if f.cleaned_data and not f.cleaned_data.get('DELETE', False) and f.cleaned_data.get('inventory_item')
+            ]
+
+            if not valid_outputs:
+                messages.error(request, "At least one portion output must be recorded.")
+                return render(request, self.template_name, {
+                    'form': form,
+                    'formset': formset,
+                })
+
+            with transaction.atomic():
+                # 1. Lock whole chicken item and re-verify stock
+                locked_whole = InventoryItem.objects.select_for_update().get(pk=whole_item.pk)
+                if qty_processed > locked_whole.quantity_on_hand:
+                    messages.error(
+                        request,
+                        f"Insufficient stock: cannot process {qty_processed} whole chickens because only "
+                        f"{locked_whole.quantity_on_hand} birds are available on hand."
+                    )
+                    return render(request, self.template_name, {
+                        'form': form,
+                        'formset': formset,
+                    })
+
+                # 2. Create ChickenProcessing record
+                processing = ChickenProcessing.objects.create(
+                    processing_date=proc_date,
+                    whole_chicken_item=locked_whole,
+                    whole_chicken_quantity=qty_processed,
+                    recorded_by=request.user,
+                    notes=notes,
+                )
+
+                # 3. Deduct whole chickens from inventory
+                locked_whole.quantity_on_hand -= qty_processed
+                locked_whole.save(update_fields=['quantity_on_hand', 'updated_at'])
+
+                # 4. Record whole chicken stock reduction movement
+                StockMovement.objects.create(
+                    inventory_item=locked_whole,
+                    movement_type=StockMovement.MovementType.PROCESSED_OUT,
+                    quantity=-qty_processed,
+                    movement_date=timezone.now(),
+                    reason=f"Cut {qty_processed} birds into portions (Batch #{processing.id})",
+                    reference_number=f"PROC-{processing.id}",
+                    recorded_by=request.user,
+                )
+
+                # 5. Process each portion output
+                total_portions = Decimal('0.00')
+                for out_form in valid_outputs:
+                    portion_item = out_form.cleaned_data['inventory_item']
+                    portion_qty = out_form.cleaned_data['quantity_produced']
+
+                    # Save ProcessingOutput
+                    ProcessingOutput.objects.create(
+                        processing=processing,
+                        inventory_item=portion_item,
+                        quantity_produced=portion_qty,
+                    )
+                    total_portions += portion_qty
+
+                    # Lock and increment portion stock
+                    locked_portion = InventoryItem.objects.select_for_update().get(pk=portion_item.pk)
+                    locked_portion.quantity_on_hand += portion_qty
+                    locked_portion.save(update_fields=['quantity_on_hand', 'updated_at'])
+
+                    # Record portion addition stock movement
+                    StockMovement.objects.create(
+                        inventory_item=locked_portion,
+                        movement_type=StockMovement.MovementType.PROCESSED_IN,
+                        quantity=portion_qty,
+                        movement_date=timezone.now(),
+                        reason=f"Produced from processing {qty_processed} whole birds (Batch #{processing.id})",
+                        reference_number=f"PROC-{processing.id}",
+                        recorded_by=request.user,
+                    )
+
+            messages.success(
+                request,
+                f"Successfully processed {qty_processed} whole chickens into {total_portions} portion cuts "
+                f"(Batch #{processing.id}). Stock balances updated atomically."
+            )
+            return redirect('inventory:processing_detail', pk=processing.pk)
+
+        messages.error(request, "Please correct the errors in the chicken processing form.")
+        return render(request, self.template_name, {
+            'form': form,
+            'formset': formset,
+        })
+
+
+class ChickenProcessingListView(StaffRequiredMixin, View):
+    """
+    List of all chicken processing batches.
+    Preserves processing history and audit records.
+    """
+    template_name = 'inventory/chicken_processing_list.html'
+
+    def get(self, request):
+        query = request.GET.get('q', '').strip()
+        processings = ChickenProcessing.objects.select_related(
+            'whole_chicken_item', 'recorded_by'
+        ).prefetch_related('outputs__inventory_item').all()
+
+        if query:
+            processings = processings.filter(
+                Q(notes__icontains=query) |
+                Q(whole_chicken_item__item_name__icontains=query) |
+                Q(recorded_by__username__icontains=query) |
+                Q(recorded_by__first_name__icontains=query)
+            )
+
+        context = {
+            'processings': processings[:100],
+            'query': query,
+            'total_batches': ChickenProcessing.objects.count(),
+        }
+        return render(request, self.template_name, context)
+
+
+class ChickenProcessingDetailView(StaffRequiredMixin, View):
+    """
+    Displays full details of a chicken processing batch:
+    whole chicken input deduction, portions produced, and linked stock movement records.
+    """
+    template_name = 'inventory/chicken_processing_detail.html'
+
+    def get(self, request, pk):
+        processing = get_object_or_404(
+            ChickenProcessing.objects.select_related('whole_chicken_item', 'recorded_by').prefetch_related('outputs__inventory_item'),
+            pk=pk
+        )
+        movements = StockMovement.objects.filter(
+            reference_number=f"PROC-{processing.id}"
+        ).select_related('inventory_item')
+
+        return render(request, self.template_name, {
+            'processing': processing,
+            'movements': movements,
+        })
