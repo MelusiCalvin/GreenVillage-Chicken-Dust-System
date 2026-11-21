@@ -1,0 +1,7 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}{{ page_title }} | ChickenHub{% endblock %}
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4"><div class="d-flex justify-content-between align-items-center mb-4"><div><h3 class="fw-bold mb-1">{{ page_title }}</h3><p class="text-muted mb-0">Operating expenses remain separate from stock purchases.</p></div><a href="{% if expense %}{% url 'expenses:detail' expense.pk %}{% else %}{% url 'expenses:list' %}{% endif %}" class="btn btn-outline-secondary">Cancel</a></div>
+  <form method="post" class="card border-0 shadow-sm" style="max-width:900px"><div class="card-body p-4">{% csrf_token %}{% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}<div class="row g-3">{% for field in form %}<div class="{% if field.name == 'notes' %}col-12{% else %}col-md-6{% endif %}"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endfor %}<div class="col-12 pt-2"><button class="btn btn-orange btn-lg" type="submit">Save expense</button></div></div></div></form>
+</div>
+{% endblock %}

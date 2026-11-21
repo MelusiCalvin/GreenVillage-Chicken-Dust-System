@@ -83,3 +83,21 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.expense_description} - R {self.amount} ({self.get_expense_category_display()}) on {self.expense_date}"
+
+
+class ExpenseRevision(models.Model):
+    """Immutable snapshot of an expense's values immediately before an edit."""
+    expense = models.ForeignKey(Expense, on_delete=models.PROTECT, related_name='revisions')
+    snapshot = models.JSONField()
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='expense_revisions',
+    )
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'expenses'
+        ordering = ['-changed_at', '-pk']
+        verbose_name = _('Expense Revision')
+        verbose_name_plural = _('Expense Revisions')
