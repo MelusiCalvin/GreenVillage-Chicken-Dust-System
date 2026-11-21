@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
 from apps.accounts.decorators import staff_required
+from apps.inventory.models import InventoryItem
 
 
 @login_required
@@ -10,15 +11,17 @@ def dashboard_index(request):
     """
     Staff dashboard landing page.
     Displays business overview statistics, quick operational links,
-    and recent activity.
-    Values are placeholders during this foundation phase until the individual
-    inventory, sales, and order management modules are integrated.
+    and recent activity with real-time stock alerts.
     """
     user = request.user
     today = timezone.now().date()
 
-    # Foundation stage placeholders (real database queries will connect
-    # in subsequent module development phases)
+    # Query real inventory stats
+    active_items = InventoryItem.objects.filter(is_active=True)
+    total_stock_items = active_items.count()
+    low_stock_list = [i for i in active_items if i.is_low_stock]
+    low_stock_count = len(low_stock_list)
+
     context = {
         'today': today,
         'user': user,
@@ -26,9 +29,10 @@ def dashboard_index(request):
             'today_sales': 'R 0.00',
             'today_sales_count': 0,
             'pending_orders': 0,
-            'total_stock_items': 0,
-            'low_stock_items': 0,
+            'total_stock_items': total_stock_items,
+            'low_stock_items': low_stock_count,
         },
+        'low_stock_alerts': low_stock_list[:5],
         'system_status': {
             'version': '1.0.0-foundation',
             'environment': 'Development',

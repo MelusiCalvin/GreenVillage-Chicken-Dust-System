@@ -44,16 +44,16 @@
             </a>
 
             <div class="sidebar-heading">Inventory & Supplies</div>
-            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+            <a href="{% url 'inventory:dashboard' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'inventory' %}active{% endif %}">
                 <i class="bi bi-boxes"></i>
                 <span>Inventory & Stock</span>
-                <span class="badge bg-secondary ms-auto small">Soon</span>
             </a>
-            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+            {% if user.is_manager %}
+            <a href="{% url 'purchases:list' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'purchases' %}active{% endif %}">
                 <i class="bi bi-truck"></i>
                 <span>Purchases & Suppliers</span>
-                <span class="badge bg-secondary ms-auto small">Soon</span>
             </a>
+            {% endif %}
             <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
                 <i class="bi bi-egg-fried"></i>
                 <span>Products & Meals</span>
@@ -86,6 +86,10 @@
 
             {% if user.is_owner %}
                 <div class="sidebar-heading">Administration</div>
+                <a href="{% url 'accounts:staff_list' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'login' %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Staff Accounts</span>
+                </a>
                 <a href="/admin/" target="_blank" class="sidebar-nav-link">
                     <i class="bi bi-sliders"></i>
                     <span>Django Admin</span>

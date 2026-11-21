@@ -141,6 +141,48 @@ class Purchase(models.Model):
         self.total_amount = total
         self.final_amount = max(Decimal('0.00'), total - self.discount)
 
+    @property
+    def total_chickens_purchased(self):
+        """Returns total quantity of whole chickens in this purchase."""
+        chicken_items = self.items.filter(
+            inventory_item__item_type='WHOLE_CHICKEN'
+        )
+        return sum(item.quantity for item in chicken_items)
+
+    @property
+    def average_chicken_price(self):
+        """
+        Calculates average price per chicken before discount:
+        total chicken subtotal / quantity.
+        """
+        qty = self.total_chickens_purchased
+        if qty and qty > 0:
+            chicken_subtotal = sum(
+                item.subtotal for item in self.items.filter(inventory_item__item_type='WHOLE_CHICKEN')
+            )
+            return (chicken_subtotal / qty).quantize(Decimal('0.01'))
+        return None
+
+    @property
+    def net_average_chicken_price(self):
+        """
+        Calculates effective net price per chicken after discount.
+        Handles discounts proportionally:
+        (chicken_subtotal * (final_amount / total_amount)) / quantity.
+        """
+        qty = self.total_chickens_purchased
+        if qty and qty > 0:
+            chicken_subtotal = sum(
+                item.subtotal for item in self.items.filter(inventory_item__item_type='WHOLE_CHICKEN')
+            )
+            if self.total_amount > 0:
+                effective_share = self.final_amount / self.total_amount
+                net_chicken_total = chicken_subtotal * effective_share
+            else:
+                net_chicken_total = chicken_subtotal
+            return (net_chicken_total / qty).quantize(Decimal('0.01'))
+        return None
+
 
 class PurchaseItem(models.Model):
     """

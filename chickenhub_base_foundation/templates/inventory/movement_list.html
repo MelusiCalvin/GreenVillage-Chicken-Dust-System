@@ -1,0 +1,137 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Stock Movement Audit Log | ChickenHub Management{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-clock-history text-orange me-2"></i>Stock Movement Audit Log
+            </h4>
+            <p class="text-muted small mb-0">Traceable historical audit of every stock receipt, kitchen usage, wastage, and manual adjustment.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Inventory Dashboard
+            </a>
+            <a href="{% url 'inventory:record_used' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-fire me-1"></i> Record Stock Used
+            </a>
+            {% if user.is_manager %}
+                <a href="{% url 'inventory:record_adjustment' %}" class="btn btn-outline-warning btn-sm">
+                    <i class="bi bi-sliders me-1"></i> Stocktake Adjustment
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <select name="item" class="form-select">
+                        <option value="">— All Inventory Items —</option>
+                        {% for i in items %}
+                            <option value="{{ i.pk }}" {% if current_item_id == i.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ i.item_name }} ({{ i.get_unit_of_measure_display }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select name="type" class="form-select">
+                        <option value="">— All Movement Types —</option>
+                        {% for val, label in movement_types %}
+                            <option value="{{ val }}" {% if current_type == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-secondary btn-sm flex-grow-1">Filter</button>
+                    {% if current_item_id or current_type %}
+                        <a href="{% url 'inventory:movement_list' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Movement Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-charcoal text-white d-flex align-items-center justify-content-between py-3">
+            <span class="fw-semibold">
+                <i class="bi bi-list-check me-2"></i>Movement Audit Entries
+            </span>
+            <span class="badge bg-secondary">{{ movements.count }} record{{ movements.count|pluralize }}</span>
+        </div>
+        <div class="card-body p-0">
+            {% if movements %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-4">Date & Time</th>
+                                <th scope="col">Item</th>
+                                <th scope="col">Movement Type</th>
+                                <th scope="col" class="text-end">Quantity Change</th>
+                                <th scope="col">Reason / Note</th>
+                                <th scope="col">Reference</th>
+                                <th scope="col" class="pe-4">Recorded By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in movements %}
+                                <tr>
+                                    <td class="ps-4 text-nowrap small text-muted">
+                                        {{ m.movement_date|date:"d M Y, H:i" }}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'inventory:item_detail' m.inventory_item.pk %}" class="fw-semibold text-dark text-decoration-none">
+                                            {{ m.inventory_item.item_name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if m.movement_type == 'RECEIVED' or m.movement_type == 'PROCESSED_IN' %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                <i class="bi bi-arrow-down-left me-1"></i>{{ m.get_movement_type_display }}
+                                            </span>
+                                        {% elif m.movement_type == 'USED' or m.movement_type == 'SOLD' or m.movement_type == 'PROCESSED_OUT' %}
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                                <i class="bi bi-arrow-up-right me-1"></i>{{ m.get_movement_type_display }}
+                                            </span>
+                                        {% elif m.movement_type == 'WASTED' %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                <i class="bi bi-trash3 me-1"></i>{{ m.get_movement_type_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle">
+                                                <i class="bi bi-sliders me-1"></i>{{ m.get_movement_type_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end fw-bold {% if m.quantity < 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {% if m.quantity > 0 %}+{% endif %}{{ m.quantity }} {{ m.inventory_item.get_unit_of_measure_display }}
+                                    </td>
+                                    <td class="small">{{ m.reason|default:"—" }}</td>
+                                    <td><code class="small text-muted">{{ m.reference_number|default:"—" }}</code></td>
+                                    <td class="pe-4 small text-muted">{{ m.recorded_by.get_full_name|default:m.recorded_by.username }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-clock-history fs-1 d-block mb-3 opacity-50"></i>
+                    <p class="mb-0">No movements found matching the selected filters.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

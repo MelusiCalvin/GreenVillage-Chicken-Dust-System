@@ -1,0 +1,259 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Record Chicken Purchase | ChickenHub{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-fire text-orange me-2"></i>Record Chicken Purchase
+            </h4>
+            <p class="text-muted small mb-0">Capture bulk poultry purchases, calculate average bird cost, and automatically update whole chicken stock.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'purchases:list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Purchases History
+            </a>
+            <a href="{% url 'purchases:supplier_create' %}" class="btn btn-outline-dark btn-sm">
+                <i class="bi bi-plus-circle me-1"></i> New Supplier
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Form Column -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-charcoal text-white py-3">
+                    <span class="fw-semibold">
+                        <i class="bi bi-cart-check me-2"></i>Chicken Purchase Details
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="chickenPurchaseForm" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}
+                                    <div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Supplier Selection -->
+                        <div class="mb-3">
+                            <label for="{{ form.supplier.id_for_label }}" class="form-label fw-semibold">
+                                {{ form.supplier.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.supplier }}
+                            {% if form.supplier.errors %}
+                                <div class="text-danger small mt-1">{{ form.supplier.errors.0 }}</div>
+                            {% endif %}
+                            {% if suppliers_count == 0 %}
+                                <div class="text-danger small mt-1">
+                                    No active suppliers registered yet. <a href="{% url 'purchases:supplier_create' %}">Register a supplier first</a>.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Purchase Date & Invoice Reference -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.purchase_date.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.purchase_date.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.purchase_date }}
+                                {% if form.purchase_date.errors %}
+                                    <div class="text-danger small mt-1">{{ form.purchase_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.invoice_number.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.invoice_number.label }}
+                                </label>
+                                {{ form.invoice_number }}
+                                {% if form.invoice_number.errors %}
+                                    <div class="text-danger small mt-1">{{ form.invoice_number.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Quantity of Birds & Total Gross Price -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.quantity.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="text-danger small mt-1">{{ form.quantity.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">{{ form.quantity.help_text }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.total_amount.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.total_amount.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.total_amount }}
+                                {% if form.total_amount.errors %}
+                                    <div class="text-danger small mt-1">{{ form.total_amount.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">{{ form.total_amount.help_text }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Discount & Payment Method -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.discount.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.discount.label }}
+                                </label>
+                                {{ form.discount }}
+                                {% if form.discount.errors %}
+                                    <div class="text-danger small mt-1">{{ form.discount.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">{{ form.discount.help_text }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.payment_method.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.payment_method.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.payment_method }}
+                                {% if form.payment_method.errors %}
+                                    <div class="text-danger small mt-1">{{ form.payment_method.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Whole Chicken Inventory Item Selection (Optional override) -->
+                        <div class="mb-3">
+                            <label for="{{ form.inventory_item.id_for_label }}" class="form-label fw-semibold">
+                                {{ form.inventory_item.label }}
+                            </label>
+                            {{ form.inventory_item }}
+                            {% if form.inventory_item.errors %}
+                                <div class="text-danger small mt-1">{{ form.inventory_item.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text small">Default: Automatically updates 'Whole Fresh Chicken' in inventory.</div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-4">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label fw-semibold">
+                                {{ form.notes.label }}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-orange px-4 py-2 fw-semibold">
+                                <i class="bi bi-check2-circle me-1"></i> Save Chicken Purchase & Update Stock
+                            </button>
+                            <a href="{% url 'purchases:list' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Automatic Cost & Calculations Panel (Requirement B) -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm bg-charcoal text-white mb-4">
+                <div class="card-header bg-dark border-secondary py-3">
+                    <span class="fw-semibold text-orange">
+                        <i class="bi bi-calculator me-2"></i>Live Purchase Calculations
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3 pb-3 border-bottom border-secondary">
+                        <div class="text-white-50 small">Quantity of Chickens</div>
+                        <div class="fs-4 fw-bold text-white" id="liveQtyDisplay">0 birds</div>
+                    </div>
+                    <div class="mb-3 pb-3 border-bottom border-secondary">
+                        <div class="text-white-50 small">Total Stock Price (Gross)</div>
+                        <div class="fs-4 fw-bold text-white" id="liveTotalDisplay">R 0.00</div>
+                    </div>
+                    <div class="mb-3 pb-3 border-bottom border-secondary">
+                        <div class="text-white-50 small">Average Chicken Price (Gross)</div>
+                        <div class="fs-3 fw-bold text-orange" id="liveAvgDisplay">R 0.00 / bird</div>
+                        <small class="text-white-50">Formula: Total Price &divide; Quantity</small>
+                    </div>
+                    <div class="mb-3 pb-3 border-bottom border-secondary">
+                        <div class="text-white-50 small">Discount Applied</div>
+                        <div class="fs-4 fw-bold text-warning" id="liveDiscountDisplay">- R 0.00</div>
+                    </div>
+                    <div class="mb-0">
+                        <div class="text-white-50 small">Final Purchase Amount (Net Paid)</div>
+                        <div class="fs-2 fw-bold text-success" id="liveFinalDisplay">R 0.00</div>
+                        <div class="small text-white-50 mt-1">
+                            Net Average: <strong class="text-white" id="liveNetAvgDisplay">R 0.00 / bird</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-2 text-charcoal">
+                        <i class="bi bi-shield-check text-success me-2"></i>Automated Inventory Guarantee
+                    </h6>
+                    <p class="small text-muted mb-0">
+                        When you submit this purchase, ChickenHub automatically increments the available whole-chicken inventory and logs an immutable audit trail entry in the stock movement ledger within a secure database transaction.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Client-side Calculation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const qtyInput = document.getElementById('{{ form.quantity.id_for_label }}');
+    const totalInput = document.getElementById('{{ form.total_amount.id_for_label }}');
+    const discountInput = document.getElementById('{{ form.discount.id_for_label }}');
+
+    const liveQty = document.getElementById('liveQtyDisplay');
+    const liveTotal = document.getElementById('liveTotalDisplay');
+    const liveAvg = document.getElementById('liveAvgDisplay');
+    const liveDiscount = document.getElementById('liveDiscountDisplay');
+    const liveFinal = document.getElementById('liveFinalDisplay');
+    const liveNetAvg = document.getElementById('liveNetAvgDisplay');
+
+    function updateCalculations() {
+        const qty = parseFloat(qtyInput.value) || 0;
+        const total = parseFloat(totalInput.value) || 0;
+        const discount = parseFloat(discountInput.value) || 0;
+
+        const finalAmount = Math.max(0, total - discount);
+        const avgPrice = qty > 0 ? (total / qty) : 0;
+        const netAvgPrice = qty > 0 ? (finalAmount / qty) : 0;
+
+        liveQty.textContent = qty.toFixed(0) + ' birds';
+        liveTotal.textContent = 'R ' + total.toFixed(2);
+        liveAvg.textContent = 'R ' + avgPrice.toFixed(2) + ' / bird';
+        liveDiscount.textContent = '- R ' + discount.toFixed(2);
+        liveFinal.textContent = 'R ' + finalAmount.toFixed(2);
+        liveNetAvg.textContent = 'R ' + netAvgPrice.toFixed(2) + ' / bird';
+    }
+
+    qtyInput.addEventListener('input', updateCalculations);
+    totalInput.addEventListener('input', updateCalculations);
+    discountInput.addEventListener('input', updateCalculations);
+
+    // Initial run
+    updateCalculations();
+});
+</script>
+{% endblock %}

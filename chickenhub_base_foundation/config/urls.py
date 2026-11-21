@@ -20,6 +20,8 @@ urlpatterns = [
     # Staff authentication & management
     path('accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('dashboard/', include('apps.dashboard.urls', namespace='dashboard')),
+    path('inventory/', include('apps.inventory.urls', namespace='inventory')),
+    path('purchases/', include('apps.purchases.urls', namespace='purchases')),
 
     # Django built-in admin
     path('admin/', admin.site.urls),

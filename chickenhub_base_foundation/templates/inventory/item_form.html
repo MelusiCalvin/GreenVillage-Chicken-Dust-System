@@ -1,0 +1,149 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}{{ form_title }} | ChickenHub Inventory{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-box-seam text-orange me-2"></i>{{ form_title }}
+            </h4>
+            <p class="text-muted small mb-0">Configure stock item properties, measurement units, and reorder alerts.</p>
+        </div>
+        <a href="{% if item %}{% url 'inventory:item_detail' item.pk %}{% else %}{% url 'inventory:dashboard' %}{% endif %}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7 col-xl-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-charcoal text-white py-3">
+                    <span class="fw-semibold">
+                        <i class="bi bi-card-text me-2"></i>Item Details
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.item_name.id_for_label }}" class="form-label fw-semibold">
+                                {{ form.item_name.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.item_name }}
+                            {% if form.item_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.item_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.item_type.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.item_type.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.item_type }}
+                                {% if form.item_type.errors %}
+                                    <div class="text-danger small mt-1">{{ form.item_type.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.unit_of_measure.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.unit_of_measure }}
+                                {% if form.unit_of_measure.errors %}
+                                    <div class="text-danger small mt-1">{{ form.unit_of_measure.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity_on_hand.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.quantity_on_hand.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.quantity_on_hand }}
+                                {% if form.quantity_on_hand.errors %}
+                                    <div class="text-danger small mt-1">{{ form.quantity_on_hand.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">{{ form.quantity_on_hand.help_text }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.reorder_level.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.reorder_level.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.reorder_level }}
+                                {% if form.reorder_level.errors %}
+                                    <div class="text-danger small mt-1">{{ form.reorder_level.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text small">{{ form.reorder_level.help_text }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 pt-2 border-top">
+                            <div class="form-check form-switch">
+                                {{ form.is_active }}
+                                <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                                <div class="form-text small">Active items appear in stock selection and alert tracking.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-orange px-4">
+                                <i class="bi bi-check2-circle me-1"></i> {{ submit_label }}
+                            </button>
+                            <a href="{% if item %}{% url 'inventory:item_detail' item.pk %}{% else %}{% url 'inventory:dashboard' %}{% endif %}"
+                               class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5 col-xl-6">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3 text-charcoal">
+                        <i class="bi bi-info-circle-fill text-orange me-2"></i>Inventory Guidelines
+                    </h6>
+                    <ul class="list-unstyled vstack gap-2 small text-muted">
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                            <span><strong>Whole Chickens:</strong> Tracked individually (Unit / Bird) when purchased from poultry farms.</span>
+                        </li>
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                            <span><strong>Chicken Portions:</strong> Generated from processing whole chickens (full, half, quarter).</span>
+                        </li>
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                            <span><strong>Raw Ingredients:</strong> Tomatoes, onions, maize meal (kg or packs), and soup sachets.</span>
+                        </li>
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                            <span><strong>Low-Stock Alerts:</strong> Automatically trigger when stock reaches or drops below the Reorder Level.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
