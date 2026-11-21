@@ -1,8 +1,11 @@
+from decimal import Decimal
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
 from django.shortcuts import render
 from django.utils import timezone
 from apps.accounts.decorators import staff_required
 from apps.inventory.models import InventoryItem
+from apps.sales.models import Sale
 
 
 @login_required
@@ -22,12 +25,17 @@ def dashboard_index(request):
     low_stock_list = [i for i in active_items if i.is_low_stock]
     low_stock_count = len(low_stock_list)
 
+    # Query real today's sales stats
+    today_sales_qs = Sale.objects.filter(sale_date__date=today)
+    today_revenue = today_sales_qs.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
+    today_sales_count = today_sales_qs.count()
+
     context = {
         'today': today,
         'user': user,
         'stats': {
-            'today_sales': 'R 0.00',
-            'today_sales_count': 0,
+            'today_sales': f'R {today_revenue:.2f}',
+            'today_sales_count': today_sales_count,
             'pending_orders': 0,
             'total_stock_items': total_stock_items,
             'low_stock_items': low_stock_count,

@@ -13,12 +13,6 @@ class Sale(models.Model):
     Covers both in-store walk-in sales (POS) and collected online orders.
     Linking to an order prevents duplicate revenue counting.
     """
-    class PaymentMethod(models.TextChoices):
-        CASH = 'CASH', _('Cash')
-        CARD = 'CARD', _('Card / Speedpoint')
-        EFT = 'EFT', _('EFT / Digital Transfer')
-        OTHER = 'OTHER', _('Other')
-
     class SaleType(models.TextChoices):
         WALK_IN = 'WALK_IN', _('Walk-in Counter Sale')
         ONLINE_COLLECTION = 'ONLINE_COLLECTION', _('Online Order Collection')
@@ -57,9 +51,9 @@ class Sale(models.Model):
         verbose_name=_('Total Amount (R)')
     )
     payment_method = models.CharField(
-        max_length=20,
-        choices=PaymentMethod.choices,
-        default=PaymentMethod.CASH,
+        max_length=40,
+        blank=True,
+        default='',
         verbose_name=_('Payment Method')
     )
     amount_tendered = models.DecimalField(
@@ -97,7 +91,20 @@ class Sale(models.Model):
         ordering = ['-sale_date']
 
     def __str__(self):
-        return f"Receipt #{self.receipt_number} - R {self.total_amount} ({self.get_payment_method_display()})"
+        return f"Sale #{self.receipt_number} - R {self.total_amount}"
+
+    @property
+    def items_count(self):
+        """Returns total quantity of meals/products in this sale."""
+        return sum(item.quantity for item in self.items.all())
+
+    @property
+    def items_summary(self):
+        """Returns readable summary of items sold."""
+        items = self.items.select_related('product').all()
+        if not items:
+            return "No items"
+        return ", ".join(f"{i.quantity} x {i.product.product_name}" for i in items)
 
     @classmethod
     def generate_receipt_number(cls):

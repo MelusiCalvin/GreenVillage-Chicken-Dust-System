@@ -64,10 +64,9 @@
             </a>
 
             <div class="sidebar-heading">Sales & Orders</div>
-            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+            <a href="{% url 'sales:pos' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'sales' %}active{% endif %}">
                 <i class="bi bi-receipt"></i>
                 <span>Sales & POS</span>
-                <span class="badge bg-secondary ms-auto small">Soon</span>
             </a>
             <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
                 <i class="bi bi-basket3"></i>
