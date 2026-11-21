@@ -1,0 +1,182 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Record Supplies & Ingredient Purchase | ChickenHub{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-cart-plus text-orange me-2"></i>Record Ingredient & Supplies Purchase
+            </h4>
+            <p class="text-muted small mb-0">Record purchases of tomatoes, onions, maize meal, soup sachets, and packaging.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'purchases:list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Purchases History
+            </a>
+            <a href="{% url 'inventory:item_create' %}" class="btn btn-outline-dark btn-sm">
+                <i class="bi bi-plus-circle me-1"></i> New Inventory Item
+            </a>
+        </div>
+    </div>
+
+    <form method="post" id="suppliesPurchaseForm" novalidate>
+        {% csrf_token %}
+
+        {% if header_form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in header_form.non_field_errors %}
+                    <div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in formset.non_form_errors %}
+                    <div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Purchase Invoice Header Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-charcoal text-white py-3">
+                <span class="fw-semibold">
+                    <i class="bi bi-receipt me-2"></i>Purchase Transaction Header
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="{{ header_form.supplier.id_for_label }}" class="form-label fw-semibold">
+                            {{ header_form.supplier.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ header_form.supplier }}
+                        {% if header_form.supplier.errors %}
+                            <div class="text-danger small mt-1">{{ header_form.supplier.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ header_form.purchase_date.id_for_label }}" class="form-label fw-semibold">
+                            {{ header_form.purchase_date.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ header_form.purchase_date }}
+                        {% if header_form.purchase_date.errors %}
+                            <div class="text-danger small mt-1">{{ header_form.purchase_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ header_form.invoice_number.id_for_label }}" class="form-label fw-semibold">
+                            {{ header_form.invoice_number.label }}
+                        </label>
+                        {{ header_form.invoice_number }}
+                        {% if header_form.invoice_number.errors %}
+                            <div class="text-danger small mt-1">{{ header_form.invoice_number.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ header_form.payment_method.id_for_label }}" class="form-label fw-semibold">
+                            {{ header_form.payment_method.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ header_form.payment_method }}
+                        {% if header_form.payment_method.errors %}
+                            <div class="text-danger small mt-1">{{ header_form.payment_method.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ header_form.discount.id_for_label }}" class="form-label fw-semibold">
+                            {{ header_form.discount.label }}
+                        </label>
+                        {{ header_form.discount }}
+                        {% if header_form.discount.errors %}
+                            <div class="text-danger small mt-1">{{ header_form.discount.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ header_form.notes.id_for_label }}" class="form-label fw-semibold">
+                            {{ header_form.notes.label }}
+                        </label>
+                        {{ header_form.notes }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Purchased Line Items Card (Requirement C) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-charcoal text-white d-flex align-items-center justify-content-between py-3">
+                <span class="fw-semibold">
+                    <i class="bi bi-basket me-2"></i>Purchased Items (Tomatoes, Onions, Maize Meal, Soup Sachets, etc.)
+                </span>
+                <span class="text-white-50 small">Fill quantity and unit price for items purchased</span>
+            </div>
+            <div class="card-body p-4">
+                {{ formset.management_form }}
+
+                <div class="table-responsive">
+                    <table class="table align-middle" id="itemsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 45%;">Inventory Item</th>
+                                <th style="width: 25%;">Quantity Purchased</th>
+                                <th style="width: 25%;">Unit Price (R)</th>
+                                <th style="width: 5%;" class="text-center">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in formset %}
+                                <tr class="item-form-row">
+                                    <td>
+                                        {{ f.id }}
+                                        {{ f.inventory_item }}
+                                        {% if f.inventory_item.errors %}
+                                            <div class="text-danger small">{{ f.inventory_item.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ f.quantity }}
+                                        {% if f.quantity.errors %}
+                                            <div class="text-danger small">{{ f.quantity.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ f.unit_price }}
+                                        {% if f.unit_price.errors %}
+                                            <div class="text-danger small">{{ f.unit_price.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if f.DELETE %}
+                                            <div class="form-check d-flex justify-content-center">
+                                                {{ f.DELETE }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="small text-muted">
+                    <i class="bi bi-info-circle me-1"></i> Unused blank rows will be automatically ignored upon submission.
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-orange px-4 py-2 fw-semibold">
+                <i class="bi bi-check2-circle me-1"></i> Save Supplies Purchase & Update Stock
+            </button>
+            <a href="{% url 'purchases:list' %}" class="btn btn-outline-secondary">
+                Cancel
+            </a>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

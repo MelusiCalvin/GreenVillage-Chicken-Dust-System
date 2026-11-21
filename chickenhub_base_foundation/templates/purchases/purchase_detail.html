@@ -1,0 +1,198 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Purchase #{{ purchase.id }} | ChickenHub{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header & Navigation -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h4 class="fw-bold mb-0">Purchase Transaction #{{ purchase.id }}</h4>
+                {% if purchase.invoice_number %}
+                    <span class="badge bg-light text-dark border">Inv: {{ purchase.invoice_number }}</span>
+                {% endif %}
+                <span class="badge bg-success">Completed & Stock Updated</span>
+            </div>
+            <p class="text-muted small mb-0">
+                Recorded on {{ purchase.purchase_date|date:"l, d F Y" }} by {{ purchase.recorded_by.get_full_name|default:purchase.recorded_by.username }}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'purchases:list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Purchases History
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
+                <i class="bi bi-printer me-1"></i> Print Voucher
+            </button>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-md-3">
+            <div class="stat-card stat-border-green">
+                <div class="stat-card-title">Final Amount (Net Paid)</div>
+                <div class="stat-card-value text-success">R {{ purchase.final_amount|floatformat:2 }}</div>
+                <div class="text-muted small mt-2">After discount</div>
+                <div class="stat-card-icon bg-light text-success"><i class="bi bi-currency-dollar"></i></div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="stat-card stat-border-orange">
+                <div class="stat-card-title">Gross Total</div>
+                <div class="stat-card-value text-orange">R {{ purchase.total_amount|floatformat:2 }}</div>
+                <div class="text-muted small mt-2">Discount: R {{ purchase.discount|floatformat:2 }}</div>
+                <div class="stat-card-icon bg-light text-orange"><i class="bi bi-tag"></i></div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="stat-card stat-border-blue">
+                <div class="stat-card-title">Supplier</div>
+                <div class="stat-card-value text-primary fs-5">{{ purchase.supplier.supplier_name }}</div>
+                <div class="text-muted small mt-2">{{ purchase.supplier.phone_number|default:"No phone" }}</div>
+                <div class="stat-card-icon bg-light text-primary"><i class="bi bi-building"></i></div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="stat-card stat-border-orange">
+                <div class="stat-card-title">Payment Method</div>
+                <div class="stat-card-value text-dark fs-5">{{ purchase.get_payment_method_display }}</div>
+                <div class="text-muted small mt-2">Paid on receipt</div>
+                <div class="stat-card-icon bg-light text-dark"><i class="bi bi-credit-card"></i></div>
+            </div>
+        </div>
+    </div>
+
+    {% if purchase.average_chicken_price %}
+        <!-- Average Chicken Cost Metric Banner (Requirement B) -->
+        <div class="card border-0 shadow-sm bg-charcoal text-white mb-4">
+            <div class="card-body p-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 rounded-circle bg-charcoal-surface text-orange fs-2">
+                        <i class="bi bi-fire"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1 text-white">Bulk Chicken Purchase Cost Analysis</h5>
+                        <p class="text-white-50 small mb-0">
+                            Total Birds Acquired: <strong>{{ purchase.total_chickens_purchased }} whole chickens</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-4 text-end">
+                    <div>
+                        <div class="text-white-50 small">Gross Average Cost</div>
+                        <div class="fs-4 fw-bold text-orange">R {{ purchase.average_chicken_price }} / bird</div>
+                    </div>
+                    <div>
+                        <div class="text-white-50 small">Net Effective Cost (After Discount)</div>
+                        <div class="fs-4 fw-bold text-success">R {{ purchase.net_average_chicken_price }} / bird</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Line Items Table -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-charcoal text-white py-3">
+            <span class="fw-semibold">
+                <i class="bi bi-card-checklist me-2"></i>Purchased Line Items
+            </span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-4">Item Name</th>
+                            <th scope="col">Category</th>
+                            <th scope="col" class="text-end">Quantity</th>
+                            <th scope="col" class="text-end">Unit Price Paid</th>
+                            <th scope="col" class="text-end pe-4">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in purchase.items.all %}
+                            <tr>
+                                <td class="ps-4">
+                                    <a href="{% url 'inventory:item_detail' item.inventory_item.pk %}" class="fw-semibold text-dark text-decoration-none">
+                                        {{ item.inventory_item.item_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        {{ item.inventory_item.get_item_type_display }}
+                                    </span>
+                                </td>
+                                <td class="text-end fw-semibold">
+                                    {{ item.quantity }} {{ item.inventory_item.get_unit_of_measure_display }}
+                                </td>
+                                <td class="text-end">R {{ item.unit_price|floatformat:2 }}</td>
+                                <td class="text-end pe-4 fw-bold">R {{ item.subtotal|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="4" class="text-end">Gross Subtotal:</th>
+                            <th class="text-end pe-4">R {{ purchase.total_amount|floatformat:2 }}</th>
+                        </tr>
+                        {% if purchase.discount > 0 %}
+                            <tr>
+                                <th colspan="4" class="text-end text-danger">Discount Received:</th>
+                                <th class="text-end pe-4 text-danger">- R {{ purchase.discount|floatformat:2 }}</th>
+                            </tr>
+                        {% endif %}
+                        <tr class="fs-6">
+                            <th colspan="4" class="text-end">Final Amount Paid:</th>
+                            <th class="text-end pe-4 text-success">R {{ purchase.final_amount|floatformat:2 }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Movements Linked to this Purchase (Traceability) -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-charcoal text-white py-3">
+            <span class="fw-semibold">
+                <i class="bi bi-arrow-left-right me-2"></i>Stock Movements Generated
+            </span>
+        </div>
+        <div class="card-body p-0">
+            {% if movements %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-4">Item</th>
+                                <th scope="col">Movement Type</th>
+                                <th scope="col" class="text-end">Quantity Added</th>
+                                <th scope="col">Date Logged</th>
+                                <th scope="col" class="pe-4">Recorded By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in movements %}
+                                <tr>
+                                    <td class="ps-4 fw-semibold">{{ m.inventory_item.item_name }}</td>
+                                    <td><span class="badge bg-success">{{ m.get_movement_type_display }}</span></td>
+                                    <td class="text-end fw-bold text-success">+{{ m.quantity }} {{ m.inventory_item.get_unit_of_measure_display }}</td>
+                                    <td class="small text-muted">{{ m.movement_date|date:"d M Y, H:i" }}</td>
+                                    <td class="pe-4 small text-muted">{{ m.recorded_by.get_full_name|default:m.recorded_by.username }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="p-3 text-muted small">No movement records found with reference PUR-{{ purchase.id }}.</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

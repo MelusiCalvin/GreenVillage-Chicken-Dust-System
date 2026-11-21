@@ -1,0 +1,149 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}{{ item.item_name }} | ChickenHub Stock{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header & Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h4 class="fw-bold mb-0">{{ item.item_name }}</h4>
+                <span class="badge bg-light text-dark border">{{ item.get_item_type_display }}</span>
+                {% if item.quantity_on_hand <= 0 %}
+                    <span class="badge bg-dark">Out of Stock</span>
+                {% elif item.is_low_stock %}
+                    <span class="badge bg-danger"><i class="bi bi-exclamation-circle me-1"></i>Low Stock Alert</span>
+                {% else %}
+                    <span class="badge bg-success">In Stock</span>
+                {% endif %}
+            </div>
+            <p class="text-muted small mb-0">Detailed stock overview, reorder parameters, and movement audit history.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'inventory:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Stock List
+            </a>
+            <a href="{% url 'inventory:record_used' %}?item={{ item.pk }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-fire me-1"></i> Record Stock Used
+            </a>
+            {% if user.is_manager %}
+                <a href="{% url 'inventory:record_wasted' %}?item={{ item.pk }}" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash3 me-1"></i> Record Wastage
+                </a>
+                <a href="{% url 'inventory:record_adjustment' %}?item={{ item.pk }}" class="btn btn-outline-warning btn-sm">
+                    <i class="bi bi-sliders me-1"></i> Stocktake / Adjust
+                </a>
+                <a href="{% url 'inventory:item_update' item.pk %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-md-4">
+            <div class="stat-card {% if item.quantity_on_hand <= 0 %}stat-border-danger{% elif item.is_low_stock %}stat-border-danger{% else %}stat-border-green{% endif %}">
+                <div class="stat-card-title">Current Balance</div>
+                <div class="stat-card-value {% if item.quantity_on_hand <= item.reorder_level %}text-danger{% else %}text-success{% endif %}">
+                    {{ item.quantity_on_hand }}
+                </div>
+                <div class="text-muted small mt-2">{{ item.get_unit_of_measure_display }}</div>
+                <div class="stat-card-icon bg-light {% if item.quantity_on_hand <= item.reorder_level %}text-danger{% else %}text-success{% endif %}">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-4">
+            <div class="stat-card stat-border-orange">
+                <div class="stat-card-title">Reorder Threshold</div>
+                <div class="stat-card-value text-orange">{{ item.reorder_level }}</div>
+                <div class="text-muted small mt-2">Alert triggers below this level</div>
+                <div class="stat-card-icon bg-light text-orange">
+                    <i class="bi bi-bell"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-4">
+            <div class="stat-card stat-border-blue">
+                <div class="stat-card-title">Measurement Unit</div>
+                <div class="stat-card-value text-primary fs-3">{{ item.get_unit_of_measure_display }}</div>
+                <div class="text-muted small mt-2">Standard tracking unit</div>
+                <div class="stat-card-icon bg-light text-primary">
+                    <i class="bi bi-rulers"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movement History Card -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-charcoal text-white d-flex align-items-center justify-content-between py-3">
+            <span class="fw-semibold">
+                <i class="bi bi-clock-history me-2"></i>Movement & Usage History
+            </span>
+            <span class="badge bg-secondary">{{ movements.count }} recent transaction{{ movements.count|pluralize }}</span>
+        </div>
+        <div class="card-body p-0">
+            {% if movements %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-4">Date & Time</th>
+                                <th scope="col">Type</th>
+                                <th scope="col" class="text-end">Quantity Change</th>
+                                <th scope="col">Reason / Notes</th>
+                                <th scope="col">Reference</th>
+                                <th scope="col" class="pe-4">Recorded By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in movements %}
+                                <tr>
+                                    <td class="ps-4 text-nowrap small text-muted">
+                                        {{ m.movement_date|date:"d M Y, H:i" }}
+                                    </td>
+                                    <td>
+                                        {% if m.movement_type == 'RECEIVED' or m.movement_type == 'PROCESSED_IN' %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                <i class="bi bi-arrow-down-left me-1"></i>{{ m.get_movement_type_display }}
+                                            </span>
+                                        {% elif m.movement_type == 'USED' or m.movement_type == 'SOLD' or m.movement_type == 'PROCESSED_OUT' %}
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                                <i class="bi bi-arrow-up-right me-1"></i>{{ m.get_movement_type_display }}
+                                            </span>
+                                        {% elif m.movement_type == 'WASTED' %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                <i class="bi bi-trash3 me-1"></i>{{ m.get_movement_type_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle">
+                                                <i class="bi bi-sliders me-1"></i>{{ m.get_movement_type_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end fw-bold {% if m.quantity < 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {% if m.quantity > 0 %}+{% endif %}{{ m.quantity }} {{ item.get_unit_of_measure_display }}
+                                    </td>
+                                    <td class="small">{{ m.reason|default:"—" }}</td>
+                                    <td><code class="small text-muted">{{ m.reference_number|default:"—" }}</code></td>
+                                    <td class="pe-4 small text-muted">{{ m.recorded_by.get_full_name|default:m.recorded_by.username }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-clock-history fs-1 d-block mb-3 opacity-50"></i>
+                    <p class="mb-0">No movements recorded yet for this item.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
