@@ -57,6 +57,25 @@ class Product(models.Model):
     def __str__(self):
         return f"{self.product_name} - R {self.selling_price}"
 
+    @property
+    def has_recipe(self):
+        """Returns True if this product has a configured recipe saved in the database."""
+        try:
+            return hasattr(self, 'recipe') and self.recipe is not None and self.recipe.pk is not None
+        except (AttributeError, models.ObjectDoesNotExist):
+            return False
+
+    @property
+    def max_producible_servings(self):
+        """
+        Calculates maximum number of meal servings that can be prepared
+        based on current stock levels of all required ingredients.
+        Returns None if no recipe is configured.
+        """
+        if not self.has_recipe:
+            return None
+        return self.recipe.max_producible_servings
+
 
 class Recipe(models.Model):
     """
@@ -83,6 +102,46 @@ class Recipe(models.Model):
 
     def __str__(self):
         return f"Recipe for {self.product.product_name}"
+
+    @property
+    def max_producible_servings(self):
+        """
+        Calculates maximum number of meals that can be prepared
+        based on current inventory of each ingredient.
+        """
+        items = self.items.select_related('inventory_item').all()
+        if not items:
+            return None
+        servings_list = []
+        for item in items:
+            if item.quantity_required > 0:
+                servings = int(item.inventory_item.quantity_on_hand // item.quantity_required)
+                servings_list.append(servings)
+        return min(servings_list) if servings_list else 0
+
+    def calculate_requirements(self, servings_count=1):
+        """
+        Calculates total stock required for preparing a batch of meals,
+        comparing against current stock on hand and identifying any shortages.
+        """
+        servings = Decimal(str(servings_count))
+        result = []
+        for item in self.items.select_related('inventory_item').all():
+            total_needed = (item.quantity_required * servings).quantize(Decimal('0.01'))
+            on_hand = item.inventory_item.quantity_on_hand
+            sufficient = on_hand >= total_needed
+            shortage = max(Decimal('0.00'), total_needed - on_hand).quantize(Decimal('0.01'))
+            result.append({
+                'recipe_item': item,
+                'inventory_item': item.inventory_item,
+                'unit_of_measure': item.inventory_item.get_unit_of_measure_display(),
+                'per_serving': item.quantity_required,
+                'total_required': total_needed,
+                'stock_on_hand': on_hand,
+                'sufficient': sufficient,
+                'shortage': shortage,
+            })
+        return result
 
 
 class RecipeItem(models.Model):

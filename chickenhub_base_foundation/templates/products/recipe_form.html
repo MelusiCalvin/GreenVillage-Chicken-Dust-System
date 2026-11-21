@@ -1,0 +1,167 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Configure Recipe: {{ product.product_name }} | ChickenHub{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-book text-orange me-2"></i>Configure Recipe: {{ product.product_name }}
+            </h4>
+            <p class="text-muted small mb-0">Specify the chicken portion and accompaniments (pap, salsa, gravy) required per meal serving.</p>
+        </div>
+        <a href="{% url 'products:detail' product.pk %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back to Product
+        </a>
+    </div>
+
+    <form method="post" id="recipeForm" novalidate>
+        {% csrf_token %}
+
+        {% if recipe_form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in recipe_form.non_field_errors %}
+                    <div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in formset.non_form_errors %}
+                    <div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <!-- Recipe Ingredients Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-charcoal text-white py-3 d-flex align-items-center justify-content-between">
+                        <span class="fw-semibold">
+                            <i class="bi bi-egg-fried me-2"></i>Recipe Ingredients & Required Quantities
+                        </span>
+                        <span class="badge bg-secondary">Per 1 meal serving</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="small text-muted mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Select each inventory item (portion cut, pap/maize meal, salsa ingredients, or sauce) and enter the exact quantity required per serving.
+                        </p>
+
+                        {{ formset.management_form }}
+
+                        <div class="table-responsive">
+                            <table class="table align-middle" id="recipeItemsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 60%;">Inventory Item / Ingredient</th>
+                                        <th style="width: 30%;">Quantity Required</th>
+                                        <th style="width: 10%;" class="text-center">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for f in formset %}
+                                        <tr class="recipe-item-row">
+                                            <td>
+                                                {{ f.id }}
+                                                {{ f.inventory_item }}
+                                                {% if f.inventory_item.errors %}
+                                                    <div class="text-danger small">{{ f.inventory_item.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ f.quantity_required }}
+                                                {% if f.quantity_required.errors %}
+                                                    <div class="text-danger small">{{ f.quantity_required.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if f.DELETE %}
+                                                    <div class="form-check d-flex justify-content-center">
+                                                        {{ f.DELETE }}
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="small text-muted">
+                            <i class="bi bi-lightbulb me-1"></i> Leave unused extra rows blank; they are ignored automatically.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preparation Instructions Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-charcoal text-white py-3">
+                        <span class="fw-semibold">
+                            <i class="bi bi-card-text me-2"></i>Cooking & Kitchen Preparation Instructions
+                        </span>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-0">
+                            {{ recipe_form.instructions }}
+                            {% if recipe_form.instructions.errors %}
+                                <div class="text-danger small mt-1">{{ recipe_form.instructions.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text small">Optional kitchen guidance, braai timing, seasoning notes, or presentation instructions.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-orange px-4 py-2 fw-semibold">
+                        <i class="bi bi-check2-circle me-1"></i> Save Recipe Configuration
+                    </button>
+                    <a href="{% url 'products:detail' product.pk %}" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+
+            <!-- Guidelines Aside -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm bg-charcoal text-white mb-4">
+                    <div class="card-header bg-dark border-secondary py-3">
+                        <span class="fw-semibold text-orange">
+                            <i class="bi bi-shield-check me-2"></i>Recipe Guidelines
+                        </span>
+                    </div>
+                    <div class="card-body p-4 small">
+                        <div class="mb-3 pb-3 border-bottom border-secondary">
+                            <div class="text-white fw-bold">Actual Business Quantities</div>
+                            <p class="text-white-50 mt-1 mb-0">
+                                Enter the authentic quantities established by ChickenHub. Quantities reflect what 1 customer serving consumes from stock.
+                            </p>
+                        </div>
+                        <div class="mb-3 pb-3 border-bottom border-secondary">
+                            <div class="text-white fw-bold">Matching Measurement Units</div>
+                            <p class="text-white-50 mt-1 mb-0">
+                                Enter numbers corresponding to the item's unit of measure:
+                                <br>&bull; Chicken portions: <strong>Units</strong> (e.g. 1.00 for a quarter cut)
+                                <br>&bull; Maize meal / Pap: <strong>kg</strong> (e.g. 0.200 kg)
+                                <br>&bull; Salsa / Relish: <strong>kg or units</strong>
+                            </p>
+                        </div>
+                        <div class="mb-0">
+                            <div class="text-white fw-bold">Automatic Stock Feasibility</div>
+                            <p class="text-white-50 mt-1 mb-0">
+                                Once saved, ChickenHub automatically calculates how many meals can be prepared based on current storeroom balances.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

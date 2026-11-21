@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from apps.products.models import Product
 
 
 def public_home(request):
@@ -8,6 +9,7 @@ def public_home(request):
     and learn about ordering and collection.
     Accessible publicly without authentication.
     """
+    db_products = Product.objects.filter(is_available=True).order_by('category', 'selling_price')
     featured_meals = [
         {
             'name': 'Quarter Chicken Dust',
@@ -55,5 +57,6 @@ def public_home(request):
 
     context = {
         'featured_meals': featured_meals,
+        'db_products': db_products,
     }
     return render(request, 'public/home.html', context)
