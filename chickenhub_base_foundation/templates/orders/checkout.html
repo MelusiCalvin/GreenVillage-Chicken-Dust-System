@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Customer Details | ChickenHub{% endblock %}
+{% block content %}
+<nav class="navbar navbar-dark navbar-chickenhub">
+    <div class="container"><a class="navbar-brand navbar-brand-chickenhub" href="{% url 'orders:menu' %}"><i
+                class="bi bi-fire text-orange"></i> Chicken<span class="brand-hub">Hub</span></a><a
+            href="{% url 'orders:cart' %}" class="btn btn-outline-light">Back to cart</a></div>
+</nav>
+<main class="container py-5">
+    <h1 class="fw-bold mb-1">Collection details</h1>
+    <p class="text-muted mb-4">No account or payment details are needed.</p>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <form method="post" class="card border-0 shadow-sm">
+                <div class="card-body p-4">{% csrf_token %}{% if form.non_field_errors %}<div
+                        class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}<div class="row g-3">
+                        <div class="col-md-6"><label class="form-label" for="{{ form.first_name.id_for_label }}">First
+                                name</label>{{ form.first_name }}{{ form.first_name.errors }}</div>
+                        <div class="col-md-6"><label class="form-label" for="{{ form.last_name.id_for_label }}">Last
+                                name</label>{{ form.last_name }}{{ form.last_name.errors }}</div>
+                        <div class="col-md-6"><label class="form-label" for="{{ form.phone_number.id_for_label }}">Phone
+                                number</label>{{ form.phone_number }}{{ form.phone_number.errors }}</div>
+                        <div class="col-md-6"><label class="form-label" for="{{ form.email.id_for_label }}">Email
+                                (optional)</label>{{ form.email }}{{ form.email.errors }}</div>
+                        <div class="col-12">
+                            <div class="alert alert-light border mb-0">This submits a collection order only. No online
+                                payment is taken.</div>
+                        </div>
+                        <div class="col-12"><button class="btn btn-orange btn-lg w-100" type="submit">Place collection
+                                order</button></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header fw-semibold">Order summary</div>
+                <ul class="list-group list-group-flush">{% for row in rows %}<li
+                        class="list-group-item d-flex justify-content-between"><span>{{ row.quantity }} × {{
+                            row.product.product_name }}</span><span>R {{ row.subtotal|floatformat:2 }}</span></li>{%
+                    endfor %}<li class="list-group-item d-flex justify-content-between fw-bold">
+                        <span>Total</span><span>R {{ total|floatformat:2 }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
