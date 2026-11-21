@@ -4,8 +4,9 @@
 <nav class="navbar navbar-dark navbar-chickenhub">
   <div class="container"><a class="navbar-brand navbar-brand-chickenhub" href="{% url 'public:home' %}"><i
         class="bi bi-fire text-orange"></i> Chicken<span class="brand-hub">Hub</span></a><a
-      class="btn btn-outline-light" href="{% url 'orders:cart' %}"><i class="bi bi-bag me-1"></i> Cart ({{ cart_count
-      }})</a></div>
+      class="btn btn-outline-light" href="{% url 'orders:cart' %}"><i class="bi bi-bag me-1">
+
+      </i> Cart ({{ cart_count }})</a></div>
 </nav>
 <main class="container py-5">
   <div class="d-flex flex-wrap justify-content-between align-items-end mb-4">

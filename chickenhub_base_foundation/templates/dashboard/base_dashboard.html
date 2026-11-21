@@ -74,10 +74,9 @@
             </a>
 
             <div class="sidebar-heading">Finance & Insights</div>
-            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+            <a href="{% url 'expenses:list' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'expenses' %}active{% endif %}">
                 <i class="bi bi-wallet2"></i>
                 <span>Expenses</span>
-                <span class="badge bg-secondary ms-auto small">Soon</span>
             </a>
             <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
                 <i class="bi bi-graph-up-arrow"></i>
