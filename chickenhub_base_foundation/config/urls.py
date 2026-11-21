@@ -22,6 +22,7 @@ urlpatterns = [
     path('dashboard/', include('apps.dashboard.urls', namespace='dashboard')),
     path('inventory/', include('apps.inventory.urls', namespace='inventory')),
     path('purchases/', include('apps.purchases.urls', namespace='purchases')),
+    path('products/', include('apps.products.urls', namespace='products')),
 
     # Django built-in admin
     path('admin/', admin.site.urls),

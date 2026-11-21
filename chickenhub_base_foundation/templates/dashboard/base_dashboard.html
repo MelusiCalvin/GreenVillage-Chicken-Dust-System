@@ -58,10 +58,9 @@
                 <span>Purchases & Suppliers</span>
             </a>
             {% endif %}
-            <a href="#" class="sidebar-nav-link text-white-50" title="Module to be activated in next phase">
+            <a href="{% url 'products:list' %}" class="sidebar-nav-link {% if request.resolver_match.app_name == 'products' %}active{% endif %}">
                 <i class="bi bi-egg-fried"></i>
                 <span>Products & Meals</span>
-                <span class="badge bg-secondary ms-auto small">Soon</span>
             </a>
 
             <div class="sidebar-heading">Sales & Orders</div>
